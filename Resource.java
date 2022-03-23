@@ -8,6 +8,9 @@ public class Resource {
 	private Color rColor;
 	private Patch home;
 	private int amount;
+	private int rShape;
+
+
 
 	public Resource(int type, int num, Patch location)
 	{
@@ -15,8 +18,16 @@ public class Resource {
 		resourceNum = num;
 		home = location;
 		rColor = WorldState.resourceColor[num];
+		rShape = WorldState.resourceShape[num];
+	}
+	
+	public int getrShape() {
+		return rShape;
 	}
 
+	public void setrShape(int shape) {
+		this.rShape = shape;
+	}
 	public int getResourceType() {
 		return resourceType;
 	}

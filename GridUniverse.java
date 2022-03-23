@@ -29,6 +29,7 @@ public class GridUniverse extends JPanel{
 	
 	//Colors
 	private Color orgColor = Color.red;
+	private Color orgColor2 = Color.pink;
 	private Color gridColor = Color.black;
 	private Color borderColor = Color.blue;
 	private Color resColor = Color.yellow;
@@ -49,7 +50,21 @@ public class GridUniverse extends JPanel{
 		for (int ix = 0; ix < x; ix++)
 		{
 			for (int jy = 0; jy < y; jy++){
-				int seed = seeder.nextInt(100);
+				double tSeed = seeder.nextDouble();
+				double cumulative = 0;
+				int seed = 0;
+				
+				for (int i = 0; i < WorldState.terrainProb.length; i++)
+				{
+					if(tSeed < (WorldState.terrainProb[i] + cumulative))
+					{
+						seed = i;//TODO
+						break;
+					}else
+					{
+						cumulative += WorldState.terrainProb[i];
+					}
+				}
 				
 				patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
 				patchGrid[ix][jy].spawnResource(seeder.nextDouble());
@@ -166,9 +181,18 @@ public class GridUniverse extends JPanel{
 				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				
 				//draw a triangle!
-				int [] x = {cellX + (length/2), cellX, cellX + length};
-				int [] y = {cellY + (width/4), cellY + ((3 * width)/4), cellY + ((3 * width)/4)};
-				g.fillPolygon(x, y, 3);
+				if (patch.getTheR().getrShape() == 0){
+					int [] x = {cellX + (length/2), cellX, cellX + length};
+					int [] y = {cellY + (width/4), cellY + ((3 * width)/4), cellY + ((3 * width)/4)};
+					g.fillPolygon(x, y, 3);
+				} else if (patch.getTheR().getrShape() == 1) { //upside down triangle
+					int [] x = {cellX + (length/2), cellX, cellX + length};
+					int [] y = {cellY + ((3 * width)/4), cellY + (width/4), cellY + (width/4)};
+					g.fillPolygon(x, y, 3);
+				} else //default small square 
+				{
+					g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				}
 			}//draw resource
 			
 			//DRAW ENTITY
@@ -178,6 +202,7 @@ public class GridUniverse extends JPanel{
 				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
 				//g.fillOval(cellX + (length*(4/5)), cellY + (width * (4/5)), 2* length/5, 2* width/5);
+				g.setColor(orgColor2);
 				g.fillOval(cellX + (length/2) - 1, cellY + (width/2) -1, 2* length/5, 2* width/5);
 				
 			}//draw entity

@@ -7,12 +7,19 @@ public class Entity {
 	
 	private String name;
 	private int idNumber;
-	private int maxHp;
 	private int hp;
-	private int attack, speed;
-	private double crit, dodge;
+	
+	//---------------------------------------------------------
+	//COMBAT VALUES, determined from Kinetics
+	private int maxHp; //amount of harm an entity can take before dying
+	private int attack; //amount of harm inflicted per attack
+	private int speed; //determines which entity acts first, and the ability to flee (speedOfLocomotion)
+	private double crit; //chance to do double damage to another entity upon attack
+	private double dodge; //chance to avoid taking damage from an action
+	private double flightTendency; //chance to decide to run away (1 - fightResponse)
+	//------------------------------------------------------------------
+	
 	private double woundPenalty;
-	private double flightTendency;
 	private Random rng;
 	private boolean isDebug;
 	private Organism theOrg;

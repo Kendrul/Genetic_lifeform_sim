@@ -36,7 +36,7 @@ public class Patch {
 			double cumulative = 0;
 			for (int i = 0; i < WorldState.resourceNum.length; i++)
 			{
-				if(roll < WorldState.rSpawnChance[type][i])
+				if(roll < (WorldState.rSpawnChance[type][i] + cumulative))
 				{
 					hasResource = true; 
 					theR = new Resource(0, i, this); //TODO
