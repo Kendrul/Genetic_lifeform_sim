@@ -217,7 +217,7 @@ public class Starter{
 			boolean forceReproduction = false;
 			for (int i = 1; i <= WorldState.turns; i++)
 			{//main loop
-				if((lifeForms.size() == 0) /*|| (end == true)*/) break; //all organisms have died, end simulation
+				if((lifeForms.size() <= 0) /*|| (end == true)*/) break; //all organisms have died, end simulation
 				if((WorldState.forcedReproductionEvent > 0) && ((i % WorldState.forcedReproductionEvent) == 0) && (i != WorldState.turns))
 					{
 						forceReproduction = true;

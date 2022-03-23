@@ -87,12 +87,45 @@ public class GridUniverse extends JPanel{
 					}
 				}
 				
-				patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
+				if (WorldState.resourceRule == 1 ) cornerClusterRule(ix, jy);
+				else if (WorldState.resourceRule == 2) centerClusterRule(ix, jy);
+				else patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
 				patchGrid[ix][jy].spawnResource(WorldState.rng0[2].rDouble());
 				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
 			}
 		}
 		WorldState.addLogEvent("The World has been created.");
+	}
+	
+	private void cornerClusterRule(int x, int y){
+		//puts resources in specific spots in the corners
+		if (x == 1 && y == 0) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 2 && y == 2) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 3 && y == 0) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 0 && y == 1) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 0 && y == 3) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 3 && y == 2) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 6 && y == 1) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 59 && y == 39) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 56 && y == 39) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 59 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 58 && y == 38) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 55 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 57 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 58 && y == 36) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
+	}
+	
+	private void centerClusterRule(int x, int y){
+		//puts resources in specific spots in the center
+		if (x == 8 && y == 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 9 && y == 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 9 && y == 9) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 8 && y == 10) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 10 && y == 10) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x == 9 && y == 11) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
+		else if (x == 11 && y == 11) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
 	}
 	
 	public void resetUniverse(int x, int y)
@@ -253,19 +286,7 @@ public class GridUniverse extends JPanel{
 			
 			//DRAW ENTITY
 			if (patch.isHasEntity()) {
-				/*
-				//this double checks to make a dead entity is not redrawn
-				boolean allDead = false;
-				for(int n =0; n < patch.theE.size(); n++)
-				{
-					if (patch.theE.get(n).getHp() <= 0) 
-						{
-							allDead = true;
-							getPatchGrid()[i][j].removeE(patch.theE.get(n));
-						}
-					else allDead = false;
-				}
-				if(allDead) continue; //all dead do not draw*/
+
 				
 				g.setColor((orgColor3)); //our little red riding hood
 				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
@@ -372,7 +393,7 @@ public class GridUniverse extends JPanel{
 						g.fillRect(cellX, cellY + width - length, width/7, length);
 					}
 					else if(limbStructuralStrength >= 0.25 && limbStructuralStrength < 0.5){
-						g.fillRect(cellX + width - width/6, cellY + width - length/2, width/6, length);
+						g.fillRect(cellX + width - width/6, cellY + width - length, width/6, length);
 						g.fillRect(cellX, cellY + width - length, width/6, length);
 					}
 					else if(limbStructuralStrength >= 0.5 && limbStructuralStrength < 0.75){

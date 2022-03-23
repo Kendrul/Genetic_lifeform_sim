@@ -111,6 +111,18 @@ public BattleState fightSim()
 	
 private boolean turn(BattleState isTurn, BattleState notTurn)
 {
+	double roll = WorldState.rng2[3].rInt(2);
+	if (roll > isTurn.getFlightTendency()) {
+		//ran away
+		escaped(isTurn);
+		return true;
+	}
+	else {	//hit and kill
+		if (isTurn.getAttack() >= notTurn.getAttack()) notTurn.setHp(0);
+		else return true; //not strong enough to win
+		return false;
+	}
+	/*
 	boolean survival;
 	if (isTurn.chooseAttack()) 
 	{
@@ -125,7 +137,7 @@ private boolean turn(BattleState isTurn, BattleState notTurn)
 			} else if (isDebug) System.out.println(isTurn.getName() + " tried to flee, it failed.");
 			survival = true;
 		}
-	return survival;
+	return survival; */
 }
 
 	/**

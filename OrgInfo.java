@@ -23,7 +23,7 @@ public class OrgInfo {
 	
 	public OrgInfo(int num, String n, int g, int bt)
 	{
-		simulationRun = Integer.toString(Starter.getSimRun());
+		//simulationRun = Integer.toString(Starter.getSimRun());
 		number = Integer.toString(num);
 		name = n;
 		generation = Integer.toString(g);

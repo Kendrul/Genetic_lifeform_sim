@@ -16,20 +16,23 @@ public class WorldState {
 	//-------------------------------------------------------------------------------------------
 	//START CONSTANTS
 	public static final int trials = 1; //set to greater than 1 to allow back to back simulation runs with same ruleset //DEFAULT 1
-	public static final int turns = 2000; //if we wish to limit the number of turns //DEFAULT 5000 or 10000	
-	public static final int sleepTime = 66; //set this higher to slow down the simulation, set it lower to speed it u //DEFAULT 33 or 66	
+	public static final int turns = 5000; //if we wish to limit the number of turns //DEFAULT 5000 or 10000	
+	public static final int sleepTime = 33; //set this higher to slow down the simulation, set it lower to speed it u //DEFAULT 33 or 66	
 	public static final boolean trueRandom = true; //DEFAULT true
-	public static final int startOrgNum = 5; //DEFAULT 200 or 300
-	public static final int forcedReproductionEvent = 2500; //DEFAULT 250
+	public static final int startOrgNum = 300; //DEFAULT 200 or 300
+	public static final int forcedReproductionEvent = 500; //DEFAULT 250
 	
 	//Fitness Rules: FoodCarried, FoodEaten, FoodShared, FoodStolen, Fights, FightsWon, Agreeability
 	//0 = not a factor, 1 = positive factor, 2 = negative factor
 	public static final int [] useThisRuleSet = {0, 0, 1, 0, 0, 0, 1}; 
 	//Reproduction Rule: {# of Previous Generation, # of offspring, # of randomly created}
 	//DEFAULT {0.1, 0.7, 0.2} -> Rule 172
-	public static final double [] reproductiveRuleSet = {0.4,0.4, 0.2};
+	public static final double [] reproductiveRuleSet = {0.1,0.7, 0.2};
 	//Terrain probability, 2nd and 3rd values are ALWAYS food patches
-	public static final double [] terrainProb = { 0.96, 0.02, 0.02}; //must add up to 1.0 //DEFAULT 0.96, 0.02, 0.02
+	public static final double [] terrainProb = { 0.90, 0.05, 0.05}; //must add up to 1.0 //DEFAULT 0.96, 0.02, 0.02
+	//resource distribution rule
+	//0 = RANDOM, 1 = CORNER CLUSTER, 2= MID CLUSTER
+	public static final int resourceRule = 0;
 	
 	
 	//Mutation CONSTANTS	
@@ -38,8 +41,8 @@ public class WorldState {
 	public static final double radicalMutation = 0.01; //radical mutation chance (anything can heppen) //DEFAULT is 0.01
 	
 	//Organism base multipliers
-	public static int baseEnergy = 100; //DEFAULT 100
-	public static int resourceCarryConstant = 100; //carryCapacity is multiplied by this constant to find the organism's ability //DEFAULT 100
+	public static int baseEnergy = 200; //DEFAULT 100
+	public static int resourceCarryConstant = 200; //carryCapacity is multiplied by this constant to find the organism's ability //DEFAULT 100
 	public static final int hpConstant = 400; //factors into starvation survival and //Default 400
 	public static final int attackConstant = hpConstant; //fight capability //DEFAULT same as hpConstant
 	public static final double baseFlight = 0.1; //base probability multiplier to flee a battle
@@ -86,10 +89,10 @@ public class WorldState {
 	public static final int lifeEnergyCost = 10; //energy consumed per turn just for living, multiplied by neuro
 	
 	public static final int regenThreshold = 20; //DEFAULT 20
-	public static final int lowEnergyThreshold = 40; //determine caloric value, and high energy //DEFAULT 40
+	public static final int lowEnergyThreshold = 100; //determine caloric value, and high energy //DEFAULT 40
 	public static final int highEnergyThreshold = 10 * lowEnergyThreshold;
 	public static final double fatiguePenalty = 0.10;
-	public static final int calorieFactor = lowEnergyThreshold / 4; //energy generated per food unit
+	public static final int calorieFactor = lowEnergyThreshold / 5; //energy generated per food unit
 	
 	public static int avgFC = 0;
 	public static int avgFE = 0;
@@ -139,7 +142,7 @@ public class WorldState {
 	//RESOURCE CONSTANTS
 	public static final boolean randomFood = false;
 	public static final Color rExhaustionColor = Color.gray;
-	public static final int resourceAmountMax = 501; //max that can spawn in a patch
+	public static final int resourceAmountMax = 1001; //max that can spawn in a patch
 	public static final String [] resourceName = {"Apple", "Peach"};
 	public static final int [] resourceNum = {0, 1};
 	//public static final int [] resourceNourishment = {} 
@@ -291,8 +294,8 @@ public class WorldState {
 	
 	public static synchronized void resetTurn(){
 		resetAverageFitness();
-		//if (WorldState.turnVault.size() > 0) Starter.getTurnStats().update(WorldState.nameVault.size() - (int) (WorldState.turnVault.get(WorldState.turnVault.size() -1).orgTotal));
-		//else Starter.getTurnStats().update(WorldState.nameVault.size());
+		if (WorldState.turnVault.size() > 0) Starter.getTurnStats().update(WorldState.nameVault.size() - (int) (WorldState.turnVault.get(WorldState.turnVault.size() -1).orgTotal));
+		else Starter.getTurnStats().update(WorldState.nameVault.size());
 		Starter.getTurnStats().update(WorldState.nameVault.size());
 		turnVault.add(Starter.getTurnStats());
 		Starter.setTurnStats(new StatPack());

@@ -10,8 +10,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Random;
 
-import old.Parameter;
-
 public class Organism implements Comparable{
 	
 	private String name;
@@ -133,10 +131,6 @@ public class Organism implements Comparable{
 		this.theOrg = theOrg;
 		theOrg.setOwner(this);
 	}
-	public ArrayList<Parameter> getParameterList()
-	{
-		return null;
-	}
 
 	public void debugSet(boolean setDebugMode)
 	{
@@ -241,10 +235,13 @@ public class Organism implements Comparable{
 	}
 	
 	public void resetAp()
-	{
+	{//resets and calculates action points for this organism's turn
 		actionPoint = ap;
 		//movePoint = ap;
-		
+		if (kinetics.getSpeedOfLocomotion() > 0.75) actionPoint += 3;
+		else if (kinetics.getSpeedOfLocomotion() > 0.5) actionPoint += 2;
+		else if (kinetics.getSpeedOfLocomotion() > 0.25) actionPoint += 1;
+		/*
 		if (kinetics.getSpeedOfLocomotion() > 0.75) 
 		{	
 			actionPoint += 3;
@@ -260,9 +257,7 @@ public class Organism implements Comparable{
 			actionPoint += 1;
 				//movePoint += 1;
 		}	
-		//if (muscleEndurance > 0.75) actionPoint += 3;
-		//else if (muscleEndurance > 0.50) actionPoint += 2;
-		//else if (muscleEndurance > 0.25) actionPoint += 1;
+*/
 			
 	}
 	
@@ -276,6 +271,7 @@ public class Organism implements Comparable{
 		changeEnergyLevel(-brainEnergyConsumption);
 		regeneration();
 		int action;
+		if (hp <= 0) return; //dead
 		
 		/*
 		if (hp <= 0) {
@@ -504,7 +500,7 @@ public class Organism implements Comparable{
 			} 
 		}
 		//calculates how much energy consumed per turn just from existing
-		brainEnergyConsumption = (int) (WorldState.lifeEnergyCost  * ((brain * 0.5) + (vision * 0.1) + (relational * 0.25)));
+		brainEnergyConsumption = (WorldState.lifeEnergyCost/2) + (int) (WorldState.lifeEnergyCost  * ((brain * 0.5) + (vision * 0.1) + (relational * 0.25)));
 		
 		//kinetics
 		for (int i = 0; i < rk.getFieldArrayNames().length; i++){
@@ -842,10 +838,15 @@ public class Organism implements Comparable{
 			{//food located here, consume some
 				if ((desperationLevel == WorldState.CRITICAL) || (desperationLevel == WorldState.HIGH)) reap();
 				else if (resourceCarryAmount < (kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant)) harvest();
-				return decideTurn();
+				return 0;
 			} else 
 			{//check nearby perceived patches for food
 				//if (movePoint < 1) return 7; //can't move any further
+				if (energy <= lowEnergyThreshold && potentialEnergy() > 0) {
+					consumeFood();
+					return 0;
+				}
+				if (resourceCarryAmount >= (kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant)) return 0;
 				if (actionPoint < 1) return 7;
 				Patch spot = theOrg.getSight().findFoodPatch();
 				if (spot != null)
@@ -1214,9 +1215,10 @@ public class Organism implements Comparable{
 	{
 		if (actionPoint < 0) return;
 		int amount = calcCollect();
-		if (amount == 0) return; //can't carry any more
+		if (amount <= 0) return; //can't carry any more
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
+		if (amount == 0) return; //can't carry any more
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " reaped " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
 		Starter.getStats().incReapEvents(1);
 		Starter.getStats().incFoodReap(amount);	
@@ -1236,6 +1238,7 @@ public class Organism implements Comparable{
 		if (amount == 0) return; //can't carry any more
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
+		if (amount == 0) return; //can't carry any more
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " harvested " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
 		Starter.getStats().incHarvestEvents(1);
 		Starter.getStats().incFoodHarvest(amount);	
