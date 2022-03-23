@@ -23,7 +23,6 @@ public class GridUniverse extends JPanel{
 	int cellX; //current location (x,y) painting 
 	int cellY;
 	private List<Point> fillCells;
-	private List<Point> emptyCells;
 	private boolean isDebug = WorldState.isDebug;
 	
 	//Size Constants from WorldState
@@ -36,7 +35,7 @@ public class GridUniverse extends JPanel{
 	
 	//Colors
 	private Color orgColor = Color.red;
-	private Color orgColor2 = Color.pink;
+	private Color orgColor2 = Color.black;
 	private Color gridColor = Color.black;
 	private Color textColor = Color.black;
 	private Color borderColor = Color.blue;
@@ -91,9 +90,7 @@ public class GridUniverse extends JPanel{
 	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
 		
-		//empty(g);
-		//fill(g);
-		testUpdate(g);
+		updateUni(g);
 /*		g.setColor(gridColor); //blue grid lines
 		
 		//grid lines - horizontal
@@ -165,10 +162,9 @@ public class GridUniverse extends JPanel{
 		return patchGrid;
 	}
 	
-	public void testUpdate(Graphics g)
+	public void updateUni(Graphics g)
 	{
 		Patch patch;
-		Point emptyCell,fillCell;
 		
 		for(int i =0; i < patchXnum; i++)
 		{for (int j = 0; j < patchYnum; j++)

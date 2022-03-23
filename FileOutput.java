@@ -11,13 +11,16 @@ public class FileOutput {
 //TODO
 	private boolean isDebug = WorldState.isDebug;
 	
-	public void outputFiles()
+	StatPack stats;
+	
+	public synchronized void outputFiles()
 	{
+		stats = Starter.getStats();
 		outFileLog();
-		outFileStat();
+		outFileStat();			
 	}
 	
-	public void outFileLog()
+	public synchronized void outFileLog()
 	{//this method creates the .log file
 		try {
 				System.out.println("Begin writing to file: " + WorldState.logFile); //for testing
@@ -40,7 +43,7 @@ public class FileOutput {
 		}//end catch block
 	}//end outFileL
 
-	public void outFileStat(){
+	public synchronized void outFileStat(){
 		try {
 			System.out.println("Begin writing to file: " + WorldState.statFile); //for testing
 			
@@ -68,7 +71,7 @@ public class FileOutput {
 	public ArrayList<String> gatherStats() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
 		
 		ArrayList<String> statLine = new ArrayList<String>();
-		String newString = "Name,";
+		String newString = "Name, Generation,";
 		
 		reflectPack rg = EventPack.geneFields(WorldState.geneVault.get(0));
 		reflectPack rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
@@ -95,7 +98,7 @@ public class FileOutput {
 		statLine.add(newString);
 		
 		for (int i =0; i < WorldState.geneVault.size(); i++) {
-			newString = WorldState.nameVault.get(i) + ",";
+			newString = WorldState.nameVault.get(i) + "," + WorldState.generationVault.get(i) + ",";
 			rg = EventPack.geneFields(WorldState.geneVault.get(i));
 			rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
 			rk = EventPack.kinFields(new PhenotypeToKinetics(rp.getFieldArrayValues(),rp.getFieldArrayNames()));
@@ -117,6 +120,33 @@ public class FileOutput {
 			}
 			statLine.add(newString);
 			}
+		
+		newString = "";
+		statLine.add(newString);
+		newString = "Final Stats";
+		statLine.add(newString);
+		
+		//Add Statistical Information from StatPack Class
+		stats.update();
+		reflectPack rs = EventPack.statFields(stats);
+		newString = "";
+		
+		for(int i =0; i < rs.getFieldArrayNames().length; i++)
+		{
+			newString += rs.getFieldArrayNames()[i];
+			newString += ",";
+		}
+		
+		statLine.add(newString);
+		newString = "";
+		
+		for (int j =0; j < rs.getFieldArrayValues().length; j++)
+		{
+			newString += Double.toString(rs.getFieldArrayValues()[j]);
+			newString += ",";
+		}
+		
+		statLine.add(newString);
 		
 		return statLine;
 	}

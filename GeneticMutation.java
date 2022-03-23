@@ -154,11 +154,13 @@ private boolean pickParent()
 private double mutateDrift(double roll, double startVal){
 	//allows for mutation within a small range bounded by +- (driftFactor + mutationFactor)
 	double finalVal = startVal + (roll * (startVal * (mutationFactor + WorldState.driftAmount)));
+	if (finalVal > 1) finalVal = 1;
 	return finalVal;
 }
 
 private double mutateRandom(){
-	double roll = WorldState.rng0[5].rDouble();;
+	double roll = WorldState.rng0[5].rDouble();
+	if (roll > 1) roll = 1;
 	return roll;
 }
 

@@ -1,25 +1,24 @@
 
 
+
 import java.lang.reflect.Field;
+import java.util.Arrays;
 
 
 public class GeneToPhenotype {
 	
 	double[] genoArray; // = new double[27];
 	String[] genoArrayNames;
-	double weight, limbLength, boneDiameter, limbStructuralStrength;
-	double muscleMass, muscleProteinSynthesis, muscleGenesisEfficiency;
+	double weight, limbLength, boneDiameter, limbStructuralStrength, osteocyteGenesisEfficiency;
+	double muscleMass, muscleProteinSynthesis, myocyteGenesisEfficiency;
 	double muscleSpeed, muscleEndurance, muscleStrength;
 	double neuralMass, perceptionRadius, hostility, moodPositive, fightResponse, colonialCognitionCapacity; 
+	double neurocyteGenesisEfficiency; 
+	double eyeSize, cranialSize, facialLength, facialWidth; 
+	double generalPhenotype; 
 	//double trade;
 	boolean isDebug = WorldState.isDebug;
-	 /**
-	  * 
-	  * @param genoArray
-	  * @param genoArrayNames
-	  * @throws IllegalArgumentException
-	  * @throws IllegalAccessException
-	  */
+	 
 	public GeneToPhenotype(double[] genoArray, String[] genoArrayNames) throws IllegalArgumentException, IllegalAccessException
 	{
 		this.genoArray = genoArray; 
@@ -37,9 +36,26 @@ public class GeneToPhenotype {
 		fightResponse = getFightResponse(); 
 		colonialCognitionCapacity = getColonialCognitionCapacity(); 
 		weight = weight();
+		eyeSize = getEyeSize();
+		facialLength = getFacialLength();
+		facialWidth = getFacialWidth(); 
+		cranialSize = getCranialSize(); 
+
+		osteocyteGenesisEfficiency = getOsteocyteGenesisEfficiency();
+		myocyteGenesisEfficiency = getMyocyteGenesisEfficiency();
+		neurocyteGenesisEfficiency = getNeurocyteGenesisEfficiency();
+				
+		generalPhenotype = getGeneralPhenotype();
+		CulturalPhenotype Billy_Bob_Culture = new CulturalPhenotype(generalPhenotype);
 		
-		//if (isDebug) print();
-		//phenoArrayGeneration(); 
+		//below used for debug (will freeze)
+		//use this mech for pause
+		/*while(true){
+			int red =(int) Math.floor(generalPhenotype*255);
+			System.out.println(red);
+			System.out.println("*****************************************************");
+			System.out.println(generalPhenotype); //1.60752171E9
+		}*/ 
 	}
 	
 	public PhenotypeToKinetics phenoArrayGeneration() throws IllegalArgumentException, IllegalAccessException{ 
@@ -124,11 +140,11 @@ public class GeneToPhenotype {
 				muscleProteinSynthesis = genoArray[i];
 			}
 			if(genoArrayNames[i].contains("Myo") && genoArrayNames[i].contains("Receptor")){
-				muscleGenesisEfficiency = genoArray[i];
+				myocyteGenesisEfficiency = genoArray[i];
 			}
-			if(muscleProteinSynthesis > muscleGenesisEfficiency){
+			if(muscleProteinSynthesis > myocyteGenesisEfficiency){
 				muscleMass = muscleProteinSynthesis;
-			} else {muscleMass = muscleGenesisEfficiency;} //if more protein synthesis than available receptors, 
+			} else {muscleMass = myocyteGenesisEfficiency;} //if more protein synthesis than available receptors, 
 			                                               //then protein gets wasted; in the opposing
 														   //case, the receptors don't get used
 														   //thus the lower number determines ultimate muscle gowth and mass
@@ -248,6 +264,85 @@ public class GeneToPhenotype {
 		return colonialCognitionCapacity; 
 	}
 	
+	
+	/////facial type defined below (translates as general phenotype (organisms use this for id (in addition to color))/////
+	public double getEyeSize(){
+		eyeSize = (perceptionRadius + colonialCognitionCapacity)/2;
+		return eyeSize; 
+	}
+	
+    public double getFacialLength(){
+		facialLength = (osteocyteGenesisEfficiency*1.5 + limbLength*0.5)/2; 
+		return facialLength; 
+	}
+    
+    public double getFacialWidth(){
+    	facialWidth = (osteocyteGenesisEfficiency*1.5 + limbStructuralStrength*0.5)/2;
+		return facialWidth; 
+	}
+
+    public double getCranialSize(){
+		cranialSize = (neurocyteGenesisEfficiency*1.5 + colonialCognitionCapacity*0.5)/2; 
+    	
+		return cranialSize; 
+	}
+	
+	
+	/////regeneration potential (not strictly phenotype stuff - but related nonetheless (diff class?)/////
+	//bone tissue generation/regeneration and resistance to environmental stressors
+	public double getOsteocyteGenesisEfficiency(){
+		for (int i = 0; i < genoArray.length; i++){
+			if(genoArrayNames[i].contains("Osteo") && genoArrayNames[i].contains("Multiplier")){
+				osteocyteGenesisEfficiency = genoArray[i]*2;
+			} 
+			if(genoArrayNames[i].contains("Osteo") && genoArrayNames[i].contains("Protein")){
+				osteocyteGenesisEfficiency += genoArray[i]; // would capture this 3 times (cause 3 proteins)
+			}
+		}
+		osteocyteGenesisEfficiency /= 5; 
+		return osteocyteGenesisEfficiency; 
+	}
+	
+	
+	//muscle tissue generation/regeneration and resistance to environmental stressors
+	public double getMyocyteGenesisEfficiency(){
+		for (int i = 0; i < genoArray.length; i++){
+			if(genoArrayNames[i].contains("Myo") && genoArrayNames[i].contains("Multiplier")){
+				myocyteGenesisEfficiency = genoArray[i]*2;
+			} 
+			if(genoArrayNames[i].contains("Myo") && genoArrayNames[i].contains("Protein")){
+				myocyteGenesisEfficiency += genoArray[i]; // would capture this 3 times (cause 3 proteins)
+			}
+		}
+		myocyteGenesisEfficiency /= 5;
+		return myocyteGenesisEfficiency; 
+	}
+	
+	
+	public double getNeurocyteGenesisEfficiency(){
+		for (int i = 0; i < genoArray.length; i++){
+			if(genoArrayNames[i].contains("Neuro") && genoArrayNames[i].contains("Multiplier")){
+				neurocyteGenesisEfficiency = genoArray[i];
+			} 
+			if(genoArrayNames[i].contains("Neuro") && genoArrayNames[i].contains("Protein")){
+				myocyteGenesisEfficiency += genoArray[i]; // would capture this 8 times (cause 8 neuro proteins)
+			}
+		}
+		neurocyteGenesisEfficiency /= 9; 
+		return neurocyteGenesisEfficiency; 
+	}
+
+	
+	//was going to use a hash function, but made my on visual-id-code-generator (aka generalPhenotype)
+	//highest priority feature is eye size
+	//lowest priority feature is cranial size (hence recognitionPriority getting smaller with each iteration)
+	public double getGeneralPhenotype(){
+		double[] generalPhenotypeArray = {eyeSize, facialLength, facialWidth, cranialSize}; 
+		for(double i = 0, recognitionPriority = 1; i < generalPhenotypeArray.length; i++, recognitionPriority -= 0.2){
+			generalPhenotype += generalPhenotypeArray[(int)i]*recognitionPriority;
+		}
+		generalPhenotype /= (generalPhenotypeArray.length);
+		//generalPhenotype = Arrays.hashCode(genoArray); 		
+		return generalPhenotype; 
+	}	
 }
-
-

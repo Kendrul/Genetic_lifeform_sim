@@ -13,6 +13,7 @@ public class Organism implements Comparable{
 	private int hp;
 	
 	private int age = 0; //in simulation turns
+	private int generation = 0;
 	private int energy = 100;
 	private int lowEnergyThreshold = WorldState.lowEnergyThreshold;
 	private int highEnergyThreshold = WorldState.highEnergyThreshold;
@@ -82,6 +83,8 @@ public class Organism implements Comparable{
 		idNumber = WorldState.getID();
 		inventory = new ArrayList<Resource>();
 		pairs = new ArrayList<Coupling>();
+		generation = Starter.getGeneration();
+		WorldState.addGenerationVault(generation);
 	}
 	
 	public Organism()
@@ -92,7 +95,9 @@ public class Organism implements Comparable{
 		fighter = new BattleState(this);
 		inventory = new ArrayList<Resource>();
 		hp = maxHp;
+		generation = Starter.getGeneration();
 		pairs = new ArrayList<Coupling>();
+		WorldState.addGenerationVault(generation);
 	}
 	
 	public OrganismGFX getTheOrg() {
@@ -163,6 +168,16 @@ public class Organism implements Comparable{
 
 	public double getDodge() {
 		return dodge;
+	}
+	
+	public void setGeneration(int g)
+	{
+		generation = g;
+	}
+	
+	public int getGeneration()
+	{
+		return generation;
 	}
 
 	public void setDodge(double dodge) {
@@ -260,6 +275,7 @@ public class Organism implements Comparable{
 				setHp(hp - maxHp);
 				if (hp < 0) {
 					WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has died due to it's poor health and/or wounds.");
+					Starter.getStats().incWoundDeath(1);
 					Starter.entityDeath(this);
 				}
 				return;
@@ -276,6 +292,7 @@ public class Organism implements Comparable{
 			setHp(hp - maxHp);
 			if (hp < 0) {
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has starved to death.");
+				Starter.getStats().incStarveDeath(1);
 				Starter.entityDeath(this);
 			}
 		}
@@ -367,7 +384,17 @@ public class Organism implements Comparable{
 				resourceCarryAmount = (int) (rk.getFieldArrayValues()[i] * WorldState.resourceCarryConstant);
 			} 
 			if(rk.getFieldArrayNames()[i].contains("fight")){
-				attack = (int) (rk.getFieldArrayValues()[i] * 20);
+				attack = (int) (rk.getFieldArrayValues()[i] * WorldState.attackConstant);
+			} 
+			if(rk.getFieldArrayNames()[i].contains("maxHp")){
+				maxHp = (int) (rk.getFieldArrayValues()[i] * WorldState.hpConstant);
+				hp = maxHp;
+			} 
+			if(rk.getFieldArrayNames()[i].contains("crit")){
+				crit = (rk.getFieldArrayValues()[i] * 20);
+			} 
+			if(rk.getFieldArrayNames()[i].contains("dodge")){
+				dodge = (rk.getFieldArrayValues()[i] * 20);
 			} 
 			
 		}
@@ -535,6 +562,8 @@ public class Organism implements Comparable{
 		addRFit(amount);
 		actionPoint--;
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " ate " + amount + " " + r.getName() + "s and regained " + (amount * WorldState.calorieFactor) + " energy.");
+		Starter.getStats().incConsumeEvents(1);
+		Starter.getStats().incFoodConsumed(amount);	
 	}
 
 	public void changeEnergyLevel(int amount)
@@ -558,6 +587,7 @@ public class Organism implements Comparable{
 		if (getBattlePenalty() > 0.9) {
 			consumeFood();
 			WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " is in poor health, and is unable to complete any actions.");
+			Starter.getStats().incUnableToActTurns(1);
 			return -1; //can't act
 		}
 		
@@ -789,6 +819,8 @@ public class Organism implements Comparable{
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " reaped " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
+		Starter.getStats().incReapEvents(1);
+		Starter.getStats().incFoodReap(amount);			
 		addRFit(amount);
 		consumeFood();
 		theOrg.getPatch().getTheR().removeAmount(amount);
@@ -803,6 +835,8 @@ public class Organism implements Comparable{
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
 		addRFit(amount);
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " harvested " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
+		Starter.getStats().incHarvestEvents(1);
+		Starter.getStats().incFoodHarvest(amount);				
 		theOrg.getPatch().getTheR().removeAmount(amount);
 		actionPoint--;
 	}
@@ -930,7 +964,7 @@ public class Organism implements Comparable{
 		return rFitness;
 	}
 	
-	public synchronized void forcedReproduction() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
+	public void forcedReproduction() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
 	{//the creator forces spontaneous reproduction
 		if (aSexual) {
 			int roll = (WorldState.rng0[2].rInt() % WorldState.maxLitter) + 1;

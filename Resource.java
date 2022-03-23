@@ -138,6 +138,9 @@ public class Resource {
 			{
 				double amountRoll = WorldState.rng0[1].rDouble();
 				amount += (startAmount * WorldState.respawnAmountMax) * amountRoll;
+				WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + getName() + " regrew " + amount + " units.");
+				Starter.getStats().incReplenishedAmount(amount);
+				Starter.getStats().incReplenishEvents(1);
 			}
 		}
 	}

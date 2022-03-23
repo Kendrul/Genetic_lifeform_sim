@@ -9,21 +9,19 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Random;
 
-
-
 public class WorldState {
 	
 	//START CONSTANTS
-	public static final int turns = 10000; //if we wish to limit the number of turns
+	public static final int turns = 1001; //if we wish to limit the number of turns
 	public static final boolean useTurns = true; //true to use above number, false to ignore
-	public static final int startOrgNum = 100;
-	public static final int sleepTime = 100;
+	public static final int startOrgNum = 1000;
+	public static final int sleepTime = 66;
 	public static final boolean allowResourceExhaustion = false;
 	
 	//TESTING FLAGS
 	public static final boolean isDebug = false;
 	public static final boolean trueRandom = true;
-	public static final int forcedReproductionEvent = 500;
+	public static final int forcedReproductionEvent = 200;
 	
 	//SEEDS
 	public static final int seed0 = 564421;
@@ -55,7 +53,7 @@ public class WorldState {
 	public static final int wLength = 1200; 
 	public static final int wWidth = 800; 
 	public static final int bLength = 400;
-	public static final int pLength = 20;
+	public static final int pLength = 10;
 	public static final int pWidth = pLength;
 	public static final int pLnum = wLength / pLength;
 	public static final int pWnum = wWidth / pWidth;
@@ -87,7 +85,7 @@ public class WorldState {
 	//EXAMPLE: Food is type 0, and represented by triangle. A specific type of food, say Apple which is 0 would be red (and a triangle)
 	
 	public static final double [][] rSpawnChance = { {0.05, 0}, {0, 0.05}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
-	public static final double [][] rReplenishChance = { {0.05, 0}, {0, 0.05}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
+	public static final double [][] rReplenishChance = { {0.10, 0}, {0, 0.10}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
 	public static final double respawnAmountMax = 0.5; //dependant on initial value
 	
 	//outputStuff
@@ -96,6 +94,7 @@ public class WorldState {
 	public static String statFile = "colonialCognitionStats.csv";
 	public static ArrayList<String> nameVault = new ArrayList<String>();
 	public static ArrayList<GeneSequence> geneVault = new ArrayList<GeneSequence>();
+	public static ArrayList<Integer> generationVault = new ArrayList<Integer>();
 	
 	//LOG FLAGS
 	public static boolean logMove = true;
@@ -125,6 +124,9 @@ public class WorldState {
 	public static final int NONE = 0;
 	public static final double baseSafety = 0.10; //for decision calculations
 	
+	//FIGHT CONSTANTS
+	public static final int attackConstant = 20;
+	public static final int hpConstant = 200;
 	
 	public static void addLogEvent(String newEvent)
 	{
@@ -156,11 +158,11 @@ public class WorldState {
 		return names[seed];
 	}
 	
-	public static void addGenome(GeneSequence gene){
+	public synchronized static void addGenome(GeneSequence gene){
 		geneVault.add(gene);
 	}
 	
-	public static void addName(String name)
+	public synchronized static void addName(String name)
 	{
 		nameVault.add(name);
 	}
@@ -208,5 +210,14 @@ public class WorldState {
 			//r4 = (int) rng4[i].getLast();				
 		}
 	}
+
+	/**
+	 * @param generationVault the generationVault to set
+	 */
+	public static synchronized void addGenerationVault(
+			int g) {
+		WorldState.generationVault.add(g);
+	}
+	
 	
 }

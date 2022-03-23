@@ -135,7 +135,7 @@ public class OrganismGFX{
 				continue tryAnotherDirection;
 			}
 			else {
-				if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false) break;
+				if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false || grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance) break;
 				else {
 					attempt++;			
 					if (attempt < attemptMax) continue tryAnotherDirection;
@@ -143,10 +143,11 @@ public class OrganismGFX{
 				}
 		}
 		
-		if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false){
+		if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance){
 			grid.getPatchGrid()[locationX][locationY].setTheE(owner);
 			grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 			if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has moved from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
+			Starter.getStats().incMoveMoves(1);
 			//grid.fillCell(locationX, locationY, this);
 		}
 		//grid.repaint();
@@ -218,7 +219,7 @@ public void randomMove() throws AWTException {
 				continue tryAnotherDirectionR;
 			}
 			else {
-				if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false) break;
+				if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance) break;
 				else {
 					attempt++;			
 					if (attempt < attemptMax) continue tryAnotherDirectionR;
@@ -226,10 +227,11 @@ public void randomMove() throws AWTException {
 				}
 		}
 		
-		if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false){
+		if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance){
 			grid.getPatchGrid()[locationX][locationY].setTheE(owner);
 			grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 			if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has wandered from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
+			Starter.getStats().incWanderMoves(1);
 		}
 
 	}
@@ -343,7 +345,7 @@ public void randomMove() throws AWTException {
 					continue tryAnotherDirectionH;
 				}
 				else {
-					if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false) break;
+					if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance) break;
 					else {
 						attempts++;			
 						if (attempts < attemptMax) continue tryAnotherDirectionH;
@@ -351,10 +353,11 @@ public void randomMove() throws AWTException {
 					}
 			}
 			
-			if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false){
+			if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance){
 				grid.getPatchGrid()[locationX][locationY].setTheE(owner);
 				grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
-				if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has explored from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
+				if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has gone on a search from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
+				Starter.getStats().incHuntMoves(1);
 			}
 		}//canMove
 	}

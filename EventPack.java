@@ -17,6 +17,7 @@ public class EventPack {
 		Starter.getLifeForms().add(kid);
 		kid.setTheOrg(new OrganismGFX(Starter.getGrid(), dad.getPoint().x, dad.getPoint().y));
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + dad.getName() + " and " + mom.getName() + " had a child named " + kid.getName());
+		Starter.getStats().incSexualReproductionEvents(1);
 		return kid;		
 	}
 	
@@ -28,12 +29,14 @@ public class EventPack {
 		Starter.getLifeForms().add(kid2);
 		kid2.setTheOrg(new OrganismGFX(Starter.getGrid(), parent.getPoint().x, parent.getPoint().y));
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + parent.getName() + " had a child named " + kid2.getName());
+		Starter.getStats().incAsexualReproductionEvents(1);
 		return kid2;
 	}
 	
 	public synchronized static void reprodDeath(Organism o)
 	{
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + o.getName() + " died from the reproductive process.");
+		Starter.getStats().incReproductionDeath(1);
 		Starter.entityDeath(o);
 	}
 	
@@ -128,6 +131,39 @@ public class EventPack {
 			return r;
 		}
 	
+	public static reflectPack statFields(StatPack stat) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException
+	{
+		    Class aClass1 = stat.getClass();
+			Field[] statStartFieldArray = aClass1.getDeclaredFields(); //.getDeclaredFields(); 
+			
+			
+			int arrayLengthMinusArrayFields = 0; 
+			for (int i = 0; i < statStartFieldArray.length; i++){
+				Field f = statStartFieldArray[i];
+				if(f.getType().equals(double.class)){
+					arrayLengthMinusArrayFields++; 
+				}
+			}
+			
+			double[] statArray = new double[arrayLengthMinusArrayFields]; //automatic adjustment of array length based on number of field variables
+			String[] statArrayNames = new String[arrayLengthMinusArrayFields]; //"------------"
+			
+			int phenoArrayIterator = 0;
+			for (int i = 0; i < statStartFieldArray.length; i++){
+				Field f = statStartFieldArray[i];
+				
+				//skip the array fields declared in this class
+				if(f.getType().equals(double.class)){
+					statArray[phenoArrayIterator] = (double)statStartFieldArray[i].get(stat);
+					statArrayNames[phenoArrayIterator] = (String)statStartFieldArray[i].getName();
+					phenoArrayIterator++; 
+				}		
+			}
+						
+			reflectPack r = new reflectPack(statStartFieldArray, statArray, statArrayNames);
+			return r;
+		}
+	
 	public static GeneSequence randomGS() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException{
 		//WorldState.addLogEvent("Begin GeneSequence Manipulation....");
 		GeneSequence aGeneSequence = new GeneSequence(); 
@@ -157,11 +193,13 @@ public class EventPack {
 			receiver.addResource(r2, r2.getAmount());
 			if (!isTheft){
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + giver.getName() + " shared " + amount + " units of " + r.getName() + " with " + receiver.getName());
+				Starter.getStats().incShareEvents(1);
 				Starter.getGrid().getPatch(giver.getPoint()).setLocalEvent("S");
 				//coupling benefit
 			} else
 			{
 				WorldState.addLogEvent("[Turn " + Starter.getTurn() + "] " + receiver.getName() + " took " + amount + " units of " + r.getName() + " from " + giver.getName());
+				Starter.getStats().incTheftEvents(1);
 				//coupling penalty
 			}
 		} else {}//do nothing
@@ -175,6 +213,7 @@ public class EventPack {
 	public static void tradeResource(Organism org1, Organism org2, Resource r1, Resource r2, int amount1, int amount2)
 	{//resources of different kinds are transfered between two organisms
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + org1.getName() + " traded with " + org2.getName());
+		Starter.getStats().incTradeEvents(1);
 		shareResource(org1, org2, r1, amount1, false);
 		shareResource(org2, org1, r2, amount2, false);
 		Starter.getGrid().getPatch(org1.getPoint()).setLocalEvent("T");

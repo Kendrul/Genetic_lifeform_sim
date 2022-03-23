@@ -16,7 +16,7 @@ public class reflectPack {
 	 */
 	public reflectPack(Field [] f,double [] d, String [] s)
 	{
-		
+		Field[] fieldArray = f;	
 		fieldArrayValues = d;
 		fieldArrayNames = s;
 	}
