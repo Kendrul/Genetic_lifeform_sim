@@ -16,9 +16,11 @@ public class Patch {
 	
 	private boolean hasResource = false;
 	private boolean hasEntity = false;
+	private double mutationFactor = 0;
 	
 	private ArrayList<Organism> theE = null;
 	private Resource theR = null;
+	private String localEvent = null;
 	
 	public Patch(int wx, int wy, int tType)
 	{
@@ -100,6 +102,10 @@ public class Patch {
 	public Organism getTheE(int index){
 		return theE.get(index);
 	}
+	
+	public int population(){
+		return theE.size();
+	}
 
 	public void setTheE(Organism theE) {
 		this.theE.add(theE); //"remove hasResource = false" to remove entity-resource collision
@@ -117,7 +123,7 @@ public class Patch {
 	}
 
 	public void setTheR(Resource theR) {
-		if ((hasEntity == false) && ((hasResource == false) || (theR == null))) this.theR = theR; //"remove hasEntity = false" to remove entity-resource collision
+		this.theR = theR; 
 		if (this.theR != null) hasResource = true;
 		else hasResource = false;
 	}
@@ -136,6 +142,54 @@ public class Patch {
 	{
 		theE.remove(e);
 		hasEntity = false;
+	}
+	
+	public boolean hasFood()
+	{
+		if (theR != null){
+			if((theR.getResourceType() == WorldState.resourceType[0]) && (theR.getAmount() > 0))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean orgHasFood()
+	{
+		if (theE.size() > 0){
+			for(int i = 0; i < theE.size(); i++)
+			{
+				if(theE.get(i).hasFood()) return true;
+			}
+		}
+		return false;
+	}
+	
+	public Organism orgWithMostFood()
+	{//find the organism on this patch that has the most food
+		Organism o = null;
+		if (theE.size() > 0){
+			for(int i = 0; i < theE.size(); i++)
+			{	
+				if (o == null) o = theE.get(i);
+				else if(theE.get(i).potentialEnergy() > o.potentialEnergy()) o = theE.get(i);
+			}
+		}
+		return o;
+	}
+
+	public String getLocalEvent() {
+		return localEvent;
+	}
+
+	public void setLocalEvent(String localEvent) {
+		this.localEvent = localEvent;
+	}
+	
+	public double getMutation()
+	{
+		return mutationFactor;
 	}
 	
 }

@@ -13,7 +13,13 @@ public class GeneToPhenotype {
 	double neuralMass, perceptionRadius, hostility, moodPositive, fightResponse, colonialCognitionCapacity; 
 	//double trade;
 	boolean isDebug = WorldState.isDebug;
-	 
+	 /**
+	  * 
+	  * @param genoArray
+	  * @param genoArrayNames
+	  * @throws IllegalArgumentException
+	  * @throws IllegalAccessException
+	  */
 	public GeneToPhenotype(double[] genoArray, String[] genoArrayNames) throws IllegalArgumentException, IllegalAccessException
 	{
 		this.genoArray = genoArray; 

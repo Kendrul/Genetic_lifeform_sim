@@ -81,5 +81,7 @@ public class GeneSequence {
     	gene_Osteo_Width_ECM = 1 - gene_Osteo_Length_ECM;
     	gene_Myo_Slow_Twitch_ECM = 1 - gene_Myo_Fast_Twitch_ECM;
     	gene_Neuro_Morphogenetic_Protein_Neutral = 1 - gene_Neuro_Morphogenetic_Protein_Hostile;
+    	gene_Neuro_Morphogenetic_Protein_MoodPositive = 1 - gene_Neuro_Morphogenetic_Protein_MoodNegative;
+    	gene_Neuro_Morphogenetic_Protein_Flight = 1 - gene_Neuro_Morphogenetic_Protein_Fight;
     }
 }

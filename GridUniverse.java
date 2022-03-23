@@ -38,14 +38,9 @@ public class GridUniverse extends JPanel{
 	private Color orgColor = Color.red;
 	private Color orgColor2 = Color.pink;
 	private Color gridColor = Color.black;
+	private Color textColor = Color.black;
 	private Color borderColor = Color.blue;
 	private Color resColor = Color.yellow;
-	
-	//BUTTONS
-	private JButton startButton;
-	private JButton exitButton;
-	private JButton resetButton;
-	private JButton pauseButton;
 	
 	//Other Stuff
 	private Patch [][] patchGrid;
@@ -189,7 +184,8 @@ public class GridUniverse extends JPanel{
 			//DRAW RESOURCE
 			if (patch.isHasResource())
 			{//draw the resources that belong on the map
-				g.setColor((patch.getTheR().getrColor())); //
+				if (patch.getTheR().getAmount() > 0) g.setColor((patch.getTheR().getrColor()));
+				else g.setColor(WorldState.rExhaustionColor);
 				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				
@@ -210,48 +206,32 @@ public class GridUniverse extends JPanel{
 			
 			//DRAW ENTITY
 			if (patch.isHasEntity()) {
-				g.setColor((orgColor)); //our little red riding hood
-				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
-				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
-				g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
-				//g.fillOval(cellX + (length*(4/5)), cellY + (width * (4/5)), 2* length/5, 2* width/5);
-				g.setColor(orgColor2);
-				g.fillOval(cellX + (length/2) - 1, cellY + (width/2) -1, 2* length/5, 2* width/5);
-				
+				if ((patch.population() > 1 ) && (patch.getLocalEvent() != null))
+				{
+					g.setColor((textColor));
+					g.drawString(patch.getLocalEvent(), cellX, cellY);
+				}else {
+					g.setColor((orgColor)); //our little red riding hood
+					//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+					//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+					g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
+					//g.fillOval(cellX + (length*(4/5)), cellY + (width * (4/5)), 2* length/5, 2* width/5);
+					g.setColor(orgColor2);
+					g.fillOval(cellX + (length/2) - 1, cellY + (width/2) -1, 2* length/5, 2* width/5);
+				}
+				patch.setLocalEvent(null); //events last 1 turn?
 			}//draw entity
 		}
 		}
 	}
-
-	public JButton getStartButton() {
-		return startButton;
+	
+	public Patch getPatch(Point p)
+	{
+		return getPatch(p.x, p.y);
 	}
-
-	public void setStartButton(JButton startButton) {
-		this.startButton = startButton;
-	}
-
-	public JButton getExitButton() {
-		return exitButton;
-	}
-
-	public void setExitButton(JButton exitButton) {
-		this.exitButton = exitButton;
-	}
-
-	public JButton getResetButton() {
-		return resetButton;
-	}
-
-	public void setResetButton(JButton resetButton) {
-		this.resetButton = resetButton;
-	}
-
-	public JButton getPauseButton() {
-		return pauseButton;
-	}
-
-	public void setPauseButton(JButton pauseButton) {
-		this.pauseButton = pauseButton;
+	
+	public Patch getPatch(int x, int y)
+	{
+		return patchGrid[x][y];
 	}
 }

@@ -12,6 +12,7 @@ public class Resource {
 	private Patch home;
 	private Organism owner;
 	private int amount;
+	private int startAmount; //patch resources only
 	private int rShape;
 
 
@@ -36,6 +37,7 @@ public class Resource {
 		rColor = WorldState.resourceColor[clone.getResourceNum()];
 		rShape = WorldState.resourceShape[clone.getResourceNum()];
 		amount = a;
+		startAmount = a;
 	}
 
 	public Resource(int type, int num, Organism own)
@@ -47,6 +49,7 @@ public class Resource {
 		rColor = WorldState.resourceColor[num];
 		rShape = WorldState.resourceShape[num];
 		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
+		startAmount = 0; //only applies to patch resources
 	}
 	
 		public Organism getOwner() {
@@ -108,14 +111,35 @@ public class Resource {
 		this.amount = amount;
 	}
 	
-	public void removeAmount(int amount)
+	public int removeAmount(int a)
 	{
-		this.amount -= amount;
+		if (a >= amount){//not enough resource, it has been e
+			a = amount;
+			amount = 0;
+			if(WorldState.allowResourceExhaustion) home.setTheR(null);
+			return a;
+		} else{
+		this.amount -= a;
+		return a;
+		}
 	}
 	
 	public void addAmount(int amount)
 	{
 		this.amount += amount;
+	}
+	
+	public void replenish()
+	{
+		if (amount < (startAmount * WorldState.respawnAmountMax)){
+		
+			double spawnRoll = WorldState.rng0[0].rDouble();
+			if (spawnRoll <= WorldState.rReplenishChance[home.getType()][resourceNum]);
+			{
+				double amountRoll = WorldState.rng0[1].rDouble();
+				amount += (startAmount * WorldState.respawnAmountMax) * amountRoll;
+			}
+		}
 	}
 	
 	

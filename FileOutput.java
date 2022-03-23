@@ -70,25 +70,51 @@ public class FileOutput {
 		ArrayList<String> statLine = new ArrayList<String>();
 		String newString = "Name,";
 		
-		reflectPack r = EventPack.geneFields(WorldState.geneVault.get(0));
+		reflectPack rg = EventPack.geneFields(WorldState.geneVault.get(0));
+		reflectPack rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
+		reflectPack rk = EventPack.kinFields(new PhenotypeToKinetics(rp.getFieldArrayValues(),rp.getFieldArrayNames()));
 		
-		for(int i =0; i < r.getFieldArrayNames().length; i++)
+		for(int i =0; i < rg.getFieldArrayNames().length; i++)
 		{
 			//if(i==0) newString = r.getFieldArrayNames()[0];
-			newString += r.getFieldArrayNames()[i];
+			newString += rg.getFieldArrayNames()[i];
+			newString += ",";
+		}
+		for(int i =0; i < rp.getFieldArrayNames().length; i++)
+		{
+			//if(i==0) newString = r.getFieldArrayNames()[0];
+			newString += rp.getFieldArrayNames()[i];
+			newString += ",";
+		}
+		for(int i =0; i < rk.getFieldArrayNames().length; i++)
+		{
+			//if(i==0) newString = r.getFieldArrayNames()[0];
+			newString += rk.getFieldArrayNames()[i];
 			newString += ",";
 		}
 		statLine.add(newString);
 		
 		for (int i =0; i < WorldState.geneVault.size(); i++) {
 			newString = WorldState.nameVault.get(i) + ",";
-			r = EventPack.geneFields(WorldState.geneVault.get(i));
+			rg = EventPack.geneFields(WorldState.geneVault.get(i));
+			rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
+			rk = EventPack.kinFields(new PhenotypeToKinetics(rp.getFieldArrayValues(),rp.getFieldArrayNames()));
 			
-			for (int j =0; j < r.getFieldArrayValues().length; j++)
+			for (int j =0; j < rg.getFieldArrayValues().length; j++)
 				{
-					newString += Double.toString(r.getFieldArrayValues()[j]);
+					newString += Double.toString(rg.getFieldArrayValues()[j]);
 					newString += ",";
 				}
+			for (int j =0; j < rp.getFieldArrayValues().length; j++)
+			{
+				newString += Double.toString(rp.getFieldArrayValues()[j]);
+				newString += ",";
+			}
+			for (int j =0; j < rk.getFieldArrayValues().length; j++)
+			{
+				newString += Double.toString(rk.getFieldArrayValues()[j]);
+				newString += ",";
+			}
 			statLine.add(newString);
 			}
 		

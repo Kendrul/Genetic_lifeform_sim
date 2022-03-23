@@ -8,7 +8,7 @@ public class Fight {
 	BattleState rob;
 	int runnerRunner; //True = bob, false = rob
 
-	boolean isDebug, ranAway;
+	boolean isDebug = WorldState.isDebug, ranAway;
 	
 	//CONSTANTS
 	private final double retreatFail = 0.1;
@@ -18,10 +18,9 @@ public class Fight {
 	private final int ROB = 2;
 	
 	
-public Fight (BattleState a, BattleState b, boolean debugModeOn){
+public Fight (BattleState a, BattleState b){
 	bob = a;
 	rob = b;
-	isDebug = debugModeOn;
 	bob.debugSet(isDebug);
 	rob.debugSet(isDebug);
 	ranAway = false;

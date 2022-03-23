@@ -7,36 +7,39 @@ public class Perception{
 	OrganismGFX organism;
 	int locationX;
 	int locationY;
-	Color colorAtLocationPoint;
+	Patch PatchAtLocationPoint;
 	int perceptionRadius = 1; 
-	Color[] perceptionRadiusBlocks;
+	Patch[] perceptionRadiusBlocks;
+	private boolean isDebug = WorldState.isDebug;
 	
 	
 	Perception(OrganismGFX thisOrganism){
 		this.organism = thisOrganism;			
 	}
 	
-	//returns the color at current block (must change to colors around organism current location block)
+	//returns the Patch at current block (must change to Patchs around organism current location block)
 	public void currentPointOfView() throws AWTException{
 		Point locationPoint = organism.getPoint(); //gets the point location of the organism
 	    locationX = locationPoint.x;
 	    locationY = locationPoint.y;
-		//colorAtLocationPoint = getPixelColor(locationX, locationY); 
+		//PatchAtLocationPoint = getPixelPatch(locationX, locationY); 
 	    
 	    if(perceptionRadius == 0){
-	    	Color[] perceptionRadiusBlocks1 = new Color[1];
+	    	Patch[] perceptionRadiusBlocks1 = new Patch[1];
 	    	perceptionRadiusBlocks = perceptionSpace(perceptionRadiusBlocks1, 0, locationX, locationY);
 	    }
 	    if(perceptionRadius == 1){
-	    	Color[] perceptionRadiusBlocks2 = new Color[9];
+	    	Patch[] perceptionRadiusBlocks2 = new Patch[9];
 	    	perceptionRadiusBlocks = perceptionSpace(perceptionRadiusBlocks2, 1, locationX, locationY);
 	    }
 	   
-	    	    
+	   if(isDebug){ 	    
 	    for(int i = 0; i < perceptionRadiusBlocks.length; i++){
-	    	System.out.println(perceptionRadiusBlocks[i]);	
+	    	if (perceptionRadiusBlocks[i] != null) System.out.println("(" + perceptionRadiusBlocks[i].getX() + ", " + perceptionRadiusBlocks[i].getY()+")");
+	    	else System.out.println("null");
 	    	System.out.println(i);
-	    }  
+	    } 
+	   }
 	}
 	
 	//setting the organism's perception radius
@@ -45,81 +48,131 @@ public class Perception{
 	}
 	
 	//contains information all the blocks within the organism's perception range
-	public Color[] perceptionSpace(Color[] perceptionRadiusBlocks, int perceptionRadius, int locationX, int locationY) throws AWTException{
+	public Patch[] perceptionSpace(Patch[] perceptionRadiusBlocks, int perceptionRadius, int locationX, int locationY) throws AWTException{
 		
 		
 		//sees only its own patch 
 		if(perceptionRadius == 0){		
-			colorAtLocationPoint = getPixelColor(locationX, locationY);
-			perceptionRadiusBlocks[0] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(locationX, locationY);
+			perceptionRadiusBlocks[0] = PatchAtLocationPoint;
 		}
 		
 		 
 		//sees it's own patch and the 8 patches surrounding it
 		int tempX, tempY;
 		if(perceptionRadius == 1){
-			colorAtLocationPoint = getPixelColor(locationX, locationY);	
-			perceptionRadiusBlocks[0] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(locationX, locationY);	
+			perceptionRadiusBlocks[0] = PatchAtLocationPoint;
 
 			
 			tempY = locationY - 1; 
 			tempY = tempY - 1;
-			colorAtLocationPoint = getPixelColor(locationX, tempY);		
-			perceptionRadiusBlocks[1] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(locationX, tempY);		
+			perceptionRadiusBlocks[1] = PatchAtLocationPoint;
 
 			
 			tempX = locationX; 
 			tempY = locationY;
 			tempX = tempX + 1; tempY = tempY - 1;
-			colorAtLocationPoint = getPixelColor(tempX, tempY);
-			perceptionRadiusBlocks[2] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, tempY);
+			perceptionRadiusBlocks[2] = PatchAtLocationPoint;
 
 			
 			tempX = locationX;
 			tempX = tempX + 1;
-			colorAtLocationPoint = getPixelColor(tempX, locationY);
-			perceptionRadiusBlocks[3] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, locationY);
+			perceptionRadiusBlocks[3] = PatchAtLocationPoint;
 
 			
 			tempX = locationX; 
 			tempY = locationY;
 			tempX = tempX + 1; tempY = tempY + 1;
-			colorAtLocationPoint = getPixelColor(tempX, tempY);
-			perceptionRadiusBlocks[4] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, tempY);
+			perceptionRadiusBlocks[4] = PatchAtLocationPoint;
 
 			
 			tempY = locationY;
 			tempY = tempY + 1;
-			colorAtLocationPoint = getPixelColor(locationX, tempY);
-			perceptionRadiusBlocks[5] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(locationX, tempY);
+			perceptionRadiusBlocks[5] = PatchAtLocationPoint;
 
 			
 			tempX = locationX; 
 			tempY = locationY;
 			tempX = tempX - 1; tempY = tempY + 1;
-			colorAtLocationPoint = getPixelColor(tempX, tempY);
-			perceptionRadiusBlocks[6] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, tempY);
+			perceptionRadiusBlocks[6] = PatchAtLocationPoint;
 
 			
 			tempX = locationX;
 			tempX = tempX - 1;
-			colorAtLocationPoint = getPixelColor(tempX, locationY);
-			perceptionRadiusBlocks[7] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, locationY);
+			perceptionRadiusBlocks[7] = PatchAtLocationPoint;
 
 			
 			tempX = locationX; 
 			tempY = locationY;
 			tempX = tempX - 1; tempY = tempY - 1;
-			colorAtLocationPoint = getPixelColor(tempX, tempY);
-			perceptionRadiusBlocks[8] = colorAtLocationPoint;
+			PatchAtLocationPoint = getPixelPatch(tempX, tempY);
+			perceptionRadiusBlocks[8] = PatchAtLocationPoint;
 		
 		}		
 		return perceptionRadiusBlocks;		
 	}
 
-	//returns the color at a block
-	public Color getPixelColor(int x, int y) throws AWTException {
-	    Robot robot = new Robot();   
-	    return robot.getPixelColor(locationX, locationY);
+	//returns the Patch at a block
+	public Patch getPixelPatch(int x, int y) throws AWTException {
+	    //Robot robot = new Robot();   
+	    //return robot.getPixelPatch(locationX, locationY);
+		if ((x < 0) || (x >= WorldState.pLnum) || (y < 0) || (y >= WorldState.pWnum)) return null;
+		return Starter.getGrid().getPatch(x,y);
+	}
+	
+	public Patch findFoodPatch()
+	{//checks for a nearby patch that has food and is not fully occupied
+		Patch optimalSpot = null;
+		for(int i = 1; i < perceptionRadiusBlocks.length; i++)
+		{//skip first spot, we already checked it
+			if (perceptionRadiusBlocks[i] == null) continue; //might have nulls because of boundary
+			if ((perceptionRadiusBlocks[i].hasFood()) && (perceptionRadiusBlocks[i].population() < WorldState.densityAllowance))
+			{
+				if ((optimalSpot == null) || (optimalSpot.getTheR().getAmount() < perceptionRadiusBlocks[i].getTheR().getAmount())){
+						optimalSpot = perceptionRadiusBlocks[i];
+				}
+			}
+		}
+		return optimalSpot;
+	}
+	
+	public Patch findFoodOrg()
+	{//checks for a nearby patch that has food and is not fully occupied
+		Patch optimalSpot = null;
+		for(int i = 1; i < perceptionRadiusBlocks.length; i++)
+		{//skip first spot, we already checked it
+			if (perceptionRadiusBlocks[i] == null) continue; //might have nulls because of boundary
+			if ((perceptionRadiusBlocks[i].isHasEntity()) && (perceptionRadiusBlocks[i].orgHasFood()) && (perceptionRadiusBlocks[i].population() < WorldState.densityAllowance))
+			{
+				if ((optimalSpot == null) || (optimalSpot.orgWithMostFood().potentialEnergy() < perceptionRadiusBlocks[i].orgWithMostFood().potentialEnergy())){
+						optimalSpot = perceptionRadiusBlocks[i];
+				}
+			}
+		}
+		return optimalSpot;
+	}
+	
+	public Patch findMate()
+	{//checks for a nearby patch that has food and is not fully occupied
+		Patch optimalSpot = null;
+		for(int i = 1; i < perceptionRadiusBlocks.length; i++)
+		{//skip first spot, we already checked it
+			if (perceptionRadiusBlocks[i] == null) continue; //might have nulls because of boundary
+			if ((perceptionRadiusBlocks[i].isHasEntity())  && (perceptionRadiusBlocks[i].population() < WorldState.densityAllowance))
+			{
+				if ((optimalSpot == null) || (optimalSpot.isHasEntity()) && (optimalSpot.getTheE().getRpriority() > WorldState.NONE)){//add extra conditionals here about reproductive fitness
+						optimalSpot = perceptionRadiusBlocks[i];
+				}
+			}
+		}
+		return optimalSpot;
 	}
 }

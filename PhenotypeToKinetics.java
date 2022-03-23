@@ -11,6 +11,11 @@ public class PhenotypeToKinetics {
 	double resourceCarryingCapacity; 
 	boolean isDebug = WorldState.isDebug;
 	
+	/**
+	 * 
+	 * @param phenoArray
+	 * @param phenoArrayNames
+	 */
 	PhenotypeToKinetics(double[] phenoArray, String[] phenoArrayNames){
 		this.phenoArray = phenoArray; 
 		this.phenoArrayNames = phenoArrayNames; 

@@ -2,8 +2,6 @@
 
 import java.util.Random;
 
-
-
 public class BattleState {
 	
 	Organism owner;
@@ -37,9 +35,9 @@ public class BattleState {
 	public boolean chooseAttack()
 	{//this is where the entity decides if it will fight or flight
 		//if the entity is too wounded, it does nothing
-		if (owner.getWoundPenalty() < 0.75) {
+		if (owner.getBattlePenalty() < 0.75) {
 		double roll = WorldState.rng2[3].rDouble();
-		if (owner.getWoundPenalty() > 0.5) roll -= (owner.getWoundPenalty() * 2); //wounded animal more likely to run
+		if (owner.getBattlePenalty() > 0.5) roll -= (owner.getBattlePenalty() * 2); //wounded animal more likely to run
 		if (roll < owner.getFlightTendency()) {
 			//chosen to run
 			return false;
@@ -50,7 +48,7 @@ public class BattleState {
 	
 	public int attackAction()
 	{
-		if (owner.getWoundPenalty() < 0.75) {
+		if (owner.getBattlePenalty() < 0.75) {
 		double roll = WorldState.rng2[4].rDouble();
 		
 		if (roll < owner.getCrit()) {
@@ -70,7 +68,7 @@ public class BattleState {
 		double roll = WorldState.rng2[5].rDouble();
 		if (roll >= owner.getDodge()) {
 		owner.setHp(owner.getHp() - damage);
-		owner.setWoundPenalty(1.0 - ((double) owner.getHp() / (double) owner.getMaxHp()));
+		//owner.setWoundPenalty(1.0 - ((double) owner.getHp() / (double) owner.getMaxHp()));
 		//if (isDebug) System.out.println(name + " has a woundPenalty level of " + woundPenalty + ".");
 		if (isDebug) System.out.println(attacker.getName() + " attacks " + owner.getName() + " for " + damage + " health, " + owner.getHp() + " remaining.");
 		//true means entity survived, false means entity has died 
@@ -88,7 +86,7 @@ public class BattleState {
 	
 	public int battleSpeed()
 	{
-		return (int) (owner.getSpeed() * (owner.getWoundPenalty() * 2));
+		return (int) (owner.getSpeed() * (owner.getBattlePenalty() * 2));
 	}
 	
 	//GETTERS AND SETTERS
@@ -141,7 +139,7 @@ public class BattleState {
 	}
 
 	public double getWoundPenalty() {
-		return owner.getWoundPenalty();
+		return owner.getBattlePenalty();
 	}
 
 	public void setWoundPenalty(double woundPenalty) {
@@ -171,4 +169,16 @@ public class BattleState {
 		if (getHp() <= 0) return false; //entity is dead
 		else return true; //entity is alive
 	}
+
+
+	public Organism getOwner() {
+		return owner;
+	}
+
+
+	public void setOwner(Organism owner) {
+		this.owner = owner;
+	}
+	
+	
 }
