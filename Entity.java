@@ -1,3 +1,4 @@
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -15,6 +16,7 @@ public class Entity {
 	private Random rng;
 	private boolean isDebug;
 	private Organism theOrg;
+	private BattleState fighter;
 	//TBI
 	
 	
@@ -203,6 +205,14 @@ public class Entity {
 		return maxHp;
 	}
 	
+	public void move()
+	{
+		theOrg.move();
+	}
 	
+	public Point getPoint()
+	{
+		return theOrg.getPoint();
+	}
 
 }

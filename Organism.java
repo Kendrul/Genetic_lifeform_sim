@@ -1,3 +1,4 @@
+import java.awt.Point;
 import java.util.Random;
 
 //live, my little one; live and let die
@@ -30,7 +31,7 @@ public class Organism{
 	//from the earth we come, to the heavens we go
 	public void genesis(){
 			
-		grid.fillCell(birthPlaceX, birthPlaceY, null); //jason
+		grid.fillCell(birthPlaceX, birthPlaceY, null); 
 		locationX = birthPlaceX; 
 		locationY = birthPlaceY; 	
 	}
@@ -95,7 +96,7 @@ public class Organism{
 				else { break; }
 			}
 			
-			grid.fillCell(locationX, locationY, this); //jason
+			grid.fillCell(locationX, locationY, this); 
 			grid.repaint();
 			  try{
 	               Thread.sleep(33); //slowed the loop to approximately 30 fps
@@ -105,7 +106,7 @@ public class Organism{
 	
 	/**
 	 * Used to move an entity one time
-	 */ //jason
+	 */ 
 	public void move(){	
 	if(canMove) {
 		
@@ -167,14 +168,14 @@ public class Organism{
 				}
 		}
 		
-		//grid.getPatchGrid()[locationX / WorldState.pLnum][locationY / WorldState.pWnum].setHasE(true);
-		//grid.getPatchGrid()[formerCellX / WorldState.pLnum][formerCellY / WorldState.pWnum].setHasE(false);
+		grid.getPatchGrid()[locationX][locationY].setHasE(true);
+		grid.getPatchGrid()[formerCellX][formerCellY].setHasE(false);
 		
 		grid.fillCell(locationX, locationY, this);
 		//grid.repaint();
 	}
 }
-	//jason
+	
 	public void setFormerPosition(int x, int y){
 		formerCellX = x;
 		formerCellY = y;
@@ -187,5 +188,9 @@ public class Organism{
 	public int random(){ 
 		int value = rand.nextInt(8) + 1; //for randomly generated values from 1 to 8 
 		return value; 
+	}
+	
+	public Point getPoint(){
+		return new Point(locationX, locationY);
 	}
 }

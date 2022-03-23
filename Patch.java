@@ -28,6 +28,27 @@ public class Patch {
 		worldY = wy;
 	}
 	
+	public void spawnResource(double roll)
+	{
+		if (roll < 0) roll *= (-1);
+		
+		if (!hasResource) {
+			double cumulative = 0;
+			for (int i = 0; i < WorldState.resourceNum.length; i++)
+			{
+				if(roll < WorldState.rSpawnChance[type][i])
+				{
+					hasResource = true; 
+					theR = new Resource(0, i, this); //TODO
+					break;
+				}else
+				{
+					cumulative += WorldState.rSpawnChance[type][i];
+				}
+			}
+		}
+	}
+	
 	public int [] findCenter()
 	{
 		int [] out = new int[2];
@@ -81,11 +102,13 @@ public class Patch {
 	
 	public boolean setHasE(boolean hasE)
 	{
-		if ((hasEntity == false) && (hasE)) {
+/*		if ((hasEntity == false) && (hasE)) {
 			hasEntity = hasE;
 			return true;}
 		else if (hasE == false) hasEntity = hasE;
-		return false;
+		return false;*/
+		hasEntity = hasE;
+		return hasE;
 	}
 
 	public Resource getTheR() {

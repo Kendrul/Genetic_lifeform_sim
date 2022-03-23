@@ -29,8 +29,9 @@ public class GridUniverse extends JPanel{
 	
 	//Colors
 	private Color orgColor = Color.red;
-	private Color gridColor = Color.green;
+	private Color gridColor = Color.black;
 	private Color borderColor = Color.blue;
+	private Color resColor = Color.yellow;
 	
 	//Other Stuff
 	private Patch [][] patchGrid;
@@ -51,6 +52,7 @@ public class GridUniverse extends JPanel{
 				int seed = seeder.nextInt(100);
 				
 				patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
+				patchGrid[ix][jy].spawnResource(seeder.nextDouble());
 				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
 			}
 		}
@@ -66,8 +68,9 @@ public class GridUniverse extends JPanel{
 	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
 		
-		empty(g);
-		fill(g);
+		//empty(g);
+		//fill(g);
+		testUpdate(g);
 		g.setColor(gridColor); //blue grid lines
 		
 		//grid lines - horizontal
@@ -111,7 +114,7 @@ public class GridUniverse extends JPanel{
 			cellX = length + (i * length);
 			cellY = width + (j * width); 
 			patch = patchGrid[i][j];
-			System.out.println("Patch(" + i + "," + j + ") color: " + patchGrid[i][j].getColor());
+			//System.out.println("Patch(" + i + "," + j + ") color: " + patchGrid[i][j].getColor());
 			g.setColor(patch.getColor()); 
 			g.fillRect(cellX, cellY, length, width);
 		}
@@ -130,12 +133,56 @@ public class GridUniverse extends JPanel{
 			cellY = width + (fillCell.y * width); 
 			patch = patchGrid[fillCell.x / WorldState.pLnum][fillCell.y / WorldState.pWnum];
 			g.setColor((orgColor)); //our little red riding hood
-			g.fillRect(cellX, cellY, length, width);		
+			//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+			g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 		}
 	}
 
 	public Patch[][] getPatchGrid() {
 		return patchGrid;
+	}
+	
+	public void testUpdate(Graphics g)
+	{
+		Patch patch;
+		Point emptyCell,fillCell;
+		
+		for(int i =0; i < patchXnum; i++)
+		{for (int j = 0; j < patchYnum; j++)
+		{	//DRAW PATCH
+			cellX = length + (i * length);
+			cellY = width + (j * width); 
+			patch = patchGrid[i][j];
+			
+			//System.out.println("Patch(" + i + "," + j + ") color: " + patchGrid[i][j].getColor());
+			g.setColor(patch.getColor()); 
+			g.fillRect(cellX, cellY, length, width);
+			
+			//DRAW RESOURCE
+			if (patch.isHasResource())
+			{//draw the resources that belong on the map
+				g.setColor((patch.getTheR().getrColor())); //
+				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				
+				//draw a triangle!
+				int [] x = {cellX + (length/2), cellX, cellX + length};
+				int [] y = {cellY + (width/4), cellY + ((3 * width)/4), cellY + ((3 * width)/4)};
+				g.fillPolygon(x, y, 3);
+			}//draw resource
+			
+			//DRAW ENTITY
+			if (patch.isHasEntity()) {
+				g.setColor((orgColor)); //our little red riding hood
+				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
+				//g.fillOval(cellX + (length*(4/5)), cellY + (width * (4/5)), 2* length/5, 2* width/5);
+				g.fillOval(cellX + (length/2) - 1, cellY + (width/2) -1, 2* length/5, 2* width/5);
+				
+			}//draw entity
+		}
+		}
 	}
 		
 }

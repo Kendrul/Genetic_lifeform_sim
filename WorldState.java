@@ -3,7 +3,7 @@ import java.awt.Color;
 public class WorldState {
 	
 	//START CONSTANTS
-	public static final int turns = 1000; //if we wish to limit the number of turns
+	public static final int turns = 10000; //if we wish to limit the number of turns
 	public static final boolean useTurns = true; //true to use above number, false to ignore
 	public static final int startOrgNum = 15;
 	public static final int sleepTime = 100;
@@ -35,19 +35,20 @@ public class WorldState {
 	public static final int [] terrainTypes = { 0, 1 };
 	public static final Color [] terrainColor = {Color.green, Color.blue};
 	public static final String [] terrainName = {"Grassland, Water"};
+	public static final double [] terrainProb = { 0.5, 0.5}; //must add up to 1.0
 	
 	//---------------------------------------------------------------------
 	//RESOURCE CONSTANTS
-	public static final String [] resourceName = {"Apple"};
-	public static final int [] resourceNum = {0};
-	public static final Color [] resourceColor = {Color.red};
+	public static final String [] resourceName = {"Apple", "Peach"};
+	public static final int [] resourceNum = {0, 1};
+	public static final Color [] resourceColor = {Color.yellow, Color.pink};
 	
 	public static final int [] resourceType = {0};
 	public static final String [] resourceTypeName = {"Food"};
-	public static final String [] resourceTypeShape = {"Circle"};
-	//EXAMPLE: Food is type 0, and represented by circles. A specific type of food, say Apple which is 0 would be red (and a circle)
+	public static final String [] resourceTypeShape = {"Triangle"};
+	//EXAMPLE: Food is type 0, and represented by triangle. A specific type of food, say Apple which is 0 would be red (and a triangle)
 	
-	public static final double [][] rSpawnChance = { {0.05} };//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
+	public static final double [][] rSpawnChance = { {0.05, 0}, {0, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
 	
 	
 	public static double getDrift()

@@ -1,6 +1,7 @@
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JApplet;
@@ -16,6 +17,8 @@ public class Starter {
 	private static final int bobSize = 2;
 	private static final int robSize = 2;
 	private static Random rng;
+	private static ArrayList<Entity> lifeForms;
+	private static GridUniverse grid;
 	
 	
 	public static void main(String[] args) {
@@ -29,15 +32,14 @@ public class Starter {
 	
 		//5)
 		//worldWindow = terraGenesis();
-		System.out.println("2 mod 2 = " + (2 % 2));
 		rng = new Random(123456789);
 		emilGenesis();
-		//ShapesDemo2D sd2 = new ShapesDemo2D();
-		//sd2.mainG(null);
 		
-		/*
-		
-		WorldState world = new WorldState();
+		//combatTest();
+		danceParty();
+	}
+	
+	public static void combatTest(){
 		//--------------------------------------------------------------
 		//             Fight Test
 		//------------------------------------------------------------
@@ -82,28 +84,36 @@ public class Starter {
 			System.out.println("Simulation Complete, exiting.....");
 			
 		}
-		*/
 	}
 
-	private static JApplet terraGenesis(){
-	    JFrame f = new JFrame("Planet Terra Nova"); //change this to change frame window title
-	    f.addWindowListener(new WindowAdapter() {
-	        public void windowClosing(WindowEvent e) {System.exit(0);}
-	    });
-
-        Random tgRNG = new Random(WorldState.patchSeed);
-        JApplet applet = new WorldWindow(WorldState.pLnum, WorldState.pWnum, tgRNG); //TODO change to WorldWindow when it has implementation
-       	f.getContentPane().add("Center", applet);
-	    applet.init();//TODO implement in worldwindow class
-	    f.pack();
-	    f.setSize(new Dimension(1000,1000)); //change this to change the size of the window
-	    f.setVisible(true);
-	    return applet;
+	private static void entityGenesis(){
+		for (int i = 0; i < WorldState.startOrgNum; i++)
+		{
+			Entity e = new Entity();
+			lifeForms.add(e);
+		}
 	}
 	
+	private static void danceParty(){
+		if (WorldState.useTurns){
+			for (int i = 0; i < WorldState.turns; i++)
+			{
+				for (int index = 0; index < lifeForms.size(); index++){
+					lifeForms.get(index).move();
+				}
+				System.out.println("Turn: " + i);
+				grid.repaint();
+				  try{
+		               Thread.sleep(WorldState.sleepTime); //slowed the loop to approximately 30 fps
+		                  }catch(Exception e) {}
+			}//end for loop
+		}//end if-then
+}//end danceParty
+	
 	private static void emilGenesis(){
+		//Create the graphic window, and the world behind it
 		Random tgRNG = new Random(WorldState.patchSeed);
-		GridUniverse grid = new GridUniverse(WorldState.pLnum, WorldState.pWnum, tgRNG);	
+		grid = new GridUniverse(WorldState.pLnum, WorldState.pWnum, tgRNG);	
 		JFrame frame = new JFrame("Planet Terra Nova");
 		//I've left some space on the left side of the grid for buttons
 		//feel free to change the position of the grid within the frame
@@ -114,26 +124,16 @@ public class Starter {
 		int x;// = rng.nextInt(WorldState.pLnum);
 		int y;// = rng.nextInt(WorldState.pWnum);
 		
-		Organism [] organism = new Organism[WorldState.startOrgNum];
+		lifeForms = new ArrayList<Entity>();
+		entityGenesis();
+		//Organism [] organism = new Organism[WorldState.startOrgNum];
+		
 		for (int index = 0; index < WorldState.startOrgNum; index++){
 			x = rng.nextInt(WorldState.pLnum);
 			y = rng.nextInt(WorldState.pWnum);
-			organism[index] = new Organism(grid, x, y);
-		}
-		
-		if (WorldState.useTurns){
-			for (int i = 0; i < WorldState.turns; i++)
-			{
-				for (int index = 0; index < WorldState.startOrgNum; index++){
-					organism[index].move();
-				}
-				System.out.println("Turn: " + i);
-				grid.repaint();
-				  try{
-		               Thread.sleep(WorldState.sleepTime); //slowed the loop to approximately 30 fps
-		                  }catch(Exception e) {}
-			}}
-		
+			//organism[index] = new Organism(grid, x, y);
+			lifeForms.get(index).setTheOrg(new Organism(grid, x, y));			
+		}		
 	}
 	
 	
