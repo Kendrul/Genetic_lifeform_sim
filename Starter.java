@@ -17,7 +17,6 @@ public class Starter {
 	private static final int robSize = 2;
 	private static Random rng;
 	
-	private static JApplet worldWindow;
 	
 	public static void main(String[] args) {
 		//1) Create any resources needed (RNG's for example)
@@ -29,19 +28,22 @@ public class Starter {
 		// 	6) Start Simulation
 	
 		//5)
-		worldWindow = terraGenesis();
+		//worldWindow = terraGenesis();
+		System.out.println("2 mod 2 = " + (2 % 2));
+		rng = new Random(123456789);
+		emilGenesis();
 		//ShapesDemo2D sd2 = new ShapesDemo2D();
 		//sd2.mainG(null);
 		
 		/*
-		rng = new Random(123456789);
+		
 		WorldState world = new WorldState();
 		//--------------------------------------------------------------
 		//             Fight Test
 		//------------------------------------------------------------
 		//Entity(name, hp, damage, speed, crit, avoidance, flightChance
-		BattleState bob = new BattleState(new Entity("Bob", 130, 20, 20, 0.1, 0.1, 0.2, world), isDebug);
-		BattleState rob = new BattleState(new Entity("Rob", 100, 30, 15, 0.1, 0.1, 0.5, world), isDebug);
+		BattleState bob = new BattleState(new Entity("Bob", 130, 20, 20, 0.1, 0.1, 0.2), isDebug);
+		BattleState rob = new BattleState(new Entity("Rob", 100, 30, 15, 0.1, 0.1, 0.5), isDebug);
 		bob.plant(1337);
 		rob.plant(7331);
 		TestFight fight = new TestFight(bob, rob, isDebug);
@@ -57,13 +59,13 @@ public class Starter {
 		
 		for (int i =0; i < bobSize; i++)
 		{
-			teamBob[i] = new BattleState(new Entity("Bob", 130, 20, 20, 0.1, 0.1, 0.2, world), isDebug);	
+			teamBob[i] = new BattleState(new Entity("Bob", 130, 20, 20, 0.1, 0.1, 0.2), isDebug);	
 			teamBob[i].plant(rng.nextInt());
 		}
 		
 		for (int i =0; i < robSize; i++)
 		{
-			teamRob[i] = new BattleState(new Entity("Rob", 100, 30, 15, 0.1, 1, 0.5, world), isDebug);
+			teamRob[i] = new BattleState(new Entity("Rob", 100, 30, 15, 0.1, 1, 0.5), isDebug);
 			teamRob[i].plant(rng.nextInt());
 		}
 		
@@ -98,5 +100,41 @@ public class Starter {
 	    f.setVisible(true);
 	    return applet;
 	}
+	
+	private static void emilGenesis(){
+		Random tgRNG = new Random(WorldState.patchSeed);
+		GridUniverse grid = new GridUniverse(WorldState.pLnum, WorldState.pWnum, tgRNG);	
+		JFrame frame = new JFrame("Planet Terra Nova");
+		//I've left some space on the left side of the grid for buttons
+		//feel free to change the position of the grid within the frame
+		frame.setSize(WorldState.winLength, WorldState.winWidth); 
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.add(grid); 
+		frame.setVisible(true);
+		int x;// = rng.nextInt(WorldState.pLnum);
+		int y;// = rng.nextInt(WorldState.pWnum);
+		
+		Organism [] organism = new Organism[WorldState.startOrgNum];
+		for (int index = 0; index < WorldState.startOrgNum; index++){
+			x = rng.nextInt(WorldState.pLnum);
+			y = rng.nextInt(WorldState.pWnum);
+			organism[index] = new Organism(grid, x, y);
+		}
+		
+		if (WorldState.useTurns){
+			for (int i = 0; i < WorldState.turns; i++)
+			{
+				for (int index = 0; index < WorldState.startOrgNum; index++){
+					organism[index].move();
+				}
+				System.out.println("Turn: " + i);
+				grid.repaint();
+				  try{
+		               Thread.sleep(WorldState.sleepTime); //slowed the loop to approximately 30 fps
+		                  }catch(Exception e) {}
+			}}
+		
+	}
+	
 	
 }

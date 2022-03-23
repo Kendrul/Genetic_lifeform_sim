@@ -12,8 +12,6 @@ public class WorldWindow extends JApplet{
 	private Random seeder;
 	
 	//----------------------------------------------------------
-   final static Color fg = Color.black;
-   final static Color bg = Color.white;
 
 	//----------------------------------------------------------
     public WorldWindow(){}
@@ -31,25 +29,4 @@ public class WorldWindow extends JApplet{
 		//terraGenesis();
 	}
 
-    public void init() {
-        //Initialize drawing colors
-        setBackground(bg);
-        setForeground(fg);
-    }
-	
-	public void update(){
-		
-	}
-	
-	private void terraGenesis(){
-	    JFrame f = new JFrame("Planet Terra Nova"); //change this to change frame window title
-	    f.addWindowListener(new WindowAdapter() {
-	        public void windowClosing(WindowEvent e) {System.exit(0);}
-	    });
-	    f.getContentPane().add("Center", this);
-	    init();//TODO implement in worldwindow class
-	    f.pack();
-	    f.setSize(new Dimension(1000,1000)); //change this to change the size of the window
-	    f.setVisible(true);
-	}
 }

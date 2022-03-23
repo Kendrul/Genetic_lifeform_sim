@@ -1,3 +1,5 @@
+import java.awt.Color;
+
 
 public class Patch {
 	
@@ -5,7 +7,10 @@ public class Patch {
 	private int worldX;
 	private int worldY;
 	
+
+
 	private int type; //See WorldState for possible values and their meaning
+	private Color color = Color.black;
 	
 	private boolean hasResource = false;
 	private boolean hasEntity = false;
@@ -15,9 +20,12 @@ public class Patch {
 	
 	public Patch(int wx, int wy, int tType)
 	{
+
+		if (tType >= WorldState.terrainTypes.length) tType = tType % (WorldState.terrainTypes.length);
+		type = tType; //terrain	
+		color = WorldState.terrainColor[type];
 		worldX = wx;
 		worldY = wy;
-		type = tType; //terrain
 	}
 	
 	public int [] findCenter()
@@ -41,7 +49,22 @@ public class Patch {
 		return hasResource;
 	}
 
+	public int getX() {
+		return worldX;
+	}
 
+	public void setX(int x) {
+		worldX = x;
+	}
+
+	public int getY() {
+		return worldY;
+	}
+
+	public void setY(int y) {
+		worldY = y;
+	}
+	
 	public boolean isHasEntity() {
 		return hasEntity;
 	}
@@ -55,17 +78,34 @@ public class Patch {
 		if (this.theE != null) hasEntity = true;
 		else hasEntity = false;
 	}
+	
+	public boolean setHasE(boolean hasE)
+	{
+		if ((hasEntity == false) && (hasE)) {
+			hasEntity = hasE;
+			return true;}
+		else if (hasE == false) hasEntity = hasE;
+		return false;
+	}
 
-	public Object getTheR() {
+	public Resource getTheR() {
 		return theR;
 	}
 
-	public void setTheR(Object theR) {
+	public void setTheR(Resource theR) {
 		if ((hasEntity == false) && ((hasResource == false) || (theR == null))) this.theR = theR; //"remove hasEntity = false" to remove entity-resource collision
 		if (this.theR != null) hasResource = true;
 		else hasResource = false;
 	}
 	
+	public void setColor(Color c)
+	{//should be changed to update the type number and change the color from there.
+		color = c;
+	}
 	
-
+	public Color getColor()
+	{
+		return color;
+	}
+	
 }

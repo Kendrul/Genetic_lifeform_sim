@@ -14,10 +14,18 @@ public class Entity {
 	private double flightTendency;
 	private Random rng;
 	private boolean isDebug;
-	private WorldState theWorld;
+	private Organism theOrg;
 	//TBI
 	
 	
+	public Organism getTheOrg() {
+		return theOrg;
+	}
+
+	public void setTheOrg(Organism theOrg) {
+		this.theOrg = theOrg;
+	}
+
 	/**
 	 * 
 	 * @param whoAreYou
@@ -28,7 +36,7 @@ public class Entity {
 	 * @param avoid
 	 * @param flightRisk
 	 */
-	public Entity(String whoAreYou, int health, int dmg, int theSpeed, double criticalStrike, double avoid, double flightRisk, WorldState world)
+	public Entity(String whoAreYou, int health, int dmg, int theSpeed, double criticalStrike, double avoid, double flightRisk)
 	{
 		name = whoAreYou;
 		maxHp = health;
@@ -40,8 +48,7 @@ public class Entity {
 		flightTendency = flightRisk;
 		woundPenalty = 0;
 		rng = new Random();
-		theWorld = world;
-		idNumber = world.getID();
+		idNumber = WorldState.getID();
 	}
 	
 	public Entity()
