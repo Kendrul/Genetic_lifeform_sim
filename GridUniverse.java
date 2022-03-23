@@ -87,9 +87,11 @@ public class GridUniverse extends JPanel{
 					}
 				}
 				
+
 				if (WorldState.resourceRule == 1 ) twoCornerClusterRule(ix, jy);
 				else if (WorldState.resourceRule == 3) oneClusterRule(ix, jy);
 				else if (WorldState.resourceRule == 2 ) fourCornerClusterRule(ix, jy);
+
 				else patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
 				patchGrid[ix][jy].spawnResource(WorldState.rng0[2].rDouble());
 				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
@@ -98,6 +100,7 @@ public class GridUniverse extends JPanel{
 		WorldState.addLogEvent("The World has been created.");
 	}
 	
+
 	private void twoCornerClusterRule(int x, int y){
 		//puts resources in specific spots in the corners
 
@@ -120,6 +123,7 @@ public class GridUniverse extends JPanel{
 		else if (x>=52 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
 		else if(x < 8 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
 		else if (x>=52 && y < 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
+
 		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
 	}
 	

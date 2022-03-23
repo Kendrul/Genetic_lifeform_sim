@@ -16,6 +16,7 @@ public class WorldState {
 	//-------------------------------------------------------------------------------------------
 	//START CONSTANTS
 	public static final int trials = 1; //set to greater than 1 to allow back to back simulation runs with same ruleset //DEFAULT 1
+
 	public static final int turns = 5000; //if we wish to limit the number of turns //DEFAULT 5000
 	public static final int sleepTime = 33; //set this higher to slow down the simulation, set it lower to speed it u //DEFAULT 33 or 66	
 	public static final boolean trueRandom = true; //DEFAULT true
@@ -26,13 +27,16 @@ public class WorldState {
 	//0 = not a factor, 1 = positive factor, 2 = negative factor
 	//First 2 can only be 1 or 0, the rest can be 0, 1, 2
 	public static final int [] useThisRuleSet = {0, 0, 2, 1, 1, 1, 2}; 
+
 	//Reproduction Rule: {# of Previous Generation, # of offspring, # of randomly created}
 	//DEFAULT {0.1, 0.7, 0.2} -> Rule 172
 	public static final double [] reproductiveRuleSet = {0.1,0.7, 0.2};
 	//Terrain probability, 2nd and 3rd values are ALWAYS food patches
 	public static final double [] terrainProb = { 0.90, 0.05, 0.05}; //must add up to 1.0 //DEFAULT 0.96, 0.02, 0.02
 	//resource distribution rule
+
 	//0 = RANDOM, 1 = 2 CORNER CLUSTER, 2= 4 CORNER CLUSTER, 3 =One Corner CLUSTER  
+
 	public static final int resourceRule = 0;
 	
 	
