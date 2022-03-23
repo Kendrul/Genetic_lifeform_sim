@@ -253,6 +253,20 @@ public class GridUniverse extends JPanel{
 			
 			//DRAW ENTITY
 			if (patch.isHasEntity()) {
+				/*
+				//this double checks to make a dead entity is not redrawn
+				boolean allDead = false;
+				for(int n =0; n < patch.theE.size(); n++)
+				{
+					if (patch.theE.get(n).getHp() <= 0) 
+						{
+							allDead = true;
+							getPatchGrid()[i][j].removeE(patch.theE.get(n));
+						}
+					else allDead = false;
+				}
+				if(allDead) continue; //all dead do not draw*/
+				
 				g.setColor((orgColor3)); //our little red riding hood
 				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));

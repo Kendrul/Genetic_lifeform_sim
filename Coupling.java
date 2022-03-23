@@ -1,4 +1,9 @@
-
+/*Coupling.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class contains relational information between 2 organisms, determined by their generalPhenotype and Agreeability
+ * 
+ */
 public class Coupling {
 
 	private Organism orgA;

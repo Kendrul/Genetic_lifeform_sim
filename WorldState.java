@@ -11,37 +11,64 @@ import java.util.Random;
 
 public class WorldState {
 	
+	//-----------------------------------------------------------------------------------------------------------------------
+	//	Change these values to tweak the simulation
+	//-------------------------------------------------------------------------------------------
 	//START CONSTANTS
-	public static final int trials = 3; //TODO important
-	public static final int turns = 10000; //if we wish to limit the number of turns //TODO important
-	public static final boolean useTurns = true; //true to use above number, false to ignore
-	public static final int startOrgNum = 200; //TODO important
-	public static final int sleepTime = 33;
-	public static final boolean allowResourceExhaustion = false;
+	public static final int trials = 1; //set to greater than 1 to allow back to back simulation runs with same ruleset //DEFAULT 1
+	public static final int turns = 2000; //if we wish to limit the number of turns //DEFAULT 5000 or 10000	
+	public static final int sleepTime = 66; //set this higher to slow down the simulation, set it lower to speed it u //DEFAULT 33 or 66	
+	public static final boolean trueRandom = true; //DEFAULT true
+	public static final int startOrgNum = 5; //DEFAULT 200 or 300
+	public static final int forcedReproductionEvent = 2500; //DEFAULT 250
 	
-	//Rules
-	//ForcedReproduction Rule
-	//public static boolean rule127 = true;
+	//Fitness Rules: FoodCarried, FoodEaten, FoodShared, FoodStolen, Fights, FightsWon, Agreeability
+	//0 = not a factor, 1 = positive factor, 2 = negative factor
+	public static final int [] useThisRuleSet = {0, 0, 1, 0, 0, 0, 1}; 
+	//Reproduction Rule: {# of Previous Generation, # of offspring, # of randomly created}
+	//DEFAULT {0.1, 0.7, 0.2} -> Rule 172
+	public static final double [] reproductiveRuleSet = {0.4,0.4, 0.2};
+	//Terrain probability, 2nd and 3rd values are ALWAYS food patches
+	public static final double [] terrainProb = { 0.96, 0.02, 0.02}; //must add up to 1.0 //DEFAULT 0.96, 0.02, 0.02
 	
-	//TESTING FLAGS
-	public static final boolean isDebug = false;
-	public static final boolean trueRandom = true; //TODO important
-	public static final int forcedReproductionEvent = 500;
-	public static final boolean reproductionDeath = false; //true = die when reproduce, false = keep living
 	
-	//SEEDS
+	//Mutation CONSTANTS	
+	public static final double driftFactor = 0.10; //Drift Mutation chance //DEFAULT IS 0.10
+	public static final double driftAmount = 0.05; //Drift Mutation range //DEFAULT is 0.05
+	public static final double radicalMutation = 0.01; //radical mutation chance (anything can heppen) //DEFAULT is 0.01
+	
+	//Organism base multipliers
+	public static int baseEnergy = 100; //DEFAULT 100
+	public static int resourceCarryConstant = 100; //carryCapacity is multiplied by this constant to find the organism's ability //DEFAULT 100
+	public static final int hpConstant = 400; //factors into starvation survival and //Default 400
+	public static final int attackConstant = hpConstant; //fight capability //DEFAULT same as hpConstant
+	public static final double baseFlight = 0.1; //base probability multiplier to flee a battle
+	 
+		//SEEDS
 	public static final int seed0 = 564421;
 	public static final int seed1 = 4939;
 	public static final int seed2 = 11477;
 	public static final int seed3 = 7319551;
 	public static final int seed4 = 3;
-	public static final int seedM = 100000;
+	public static final int seedM = 73;
+	
+	
+//-------------------------------------------------------------------------------------------------------------------------------
+	//BACKGROUND SIMULATION CONSTANTS
+	//THESE SHOULD NOT BE CHANGED
+//--------------------------------------------------------------------
+	
+
+	public static final boolean allowResourceExhaustion = false;
+	public static final boolean useTurns = true; //true to use above number, false to ignore
+	
+	//TESTING FLAGS
+	public static final boolean isDebug = false;
+	public static final boolean reproductionDeath = false; //true = die when reproduce, false = keep living
 	
 	//R-FITNESS RULES
 	public static final int rRuleNum = 7;
 	public static int [] rRuleSet = new int[rRuleNum];
-	//Rules: FoodCarried, FoodEaten, FoodShared, FoodStolen, Fights, FightsWon, Agreeability
-	public static final int [] useThisRuleSet = {1, 1, 0, 0, 0, 0, 0}; //TODO reproduction rule
 	public static final boolean useOldRule = false;
 	//0 = no factor, 1 = positive factor, 2 = negative factor
   /*public static final int [] rRuleFc = { 0, 1};
@@ -51,6 +78,18 @@ public class WorldState {
 	public static final int [] rRuleBw = { 0, 1, 2};
 	public static final int [] rRuleBn = { 0, 1, 2};
 	public static final int [] rRuleA = { 0, 1, 2};*/
+	
+		//ORGANISM ENERGY CONSTANTS 
+	public static final int fightEnergyCost = 0; //DEFAULT 0
+	public static final int moveEnergyCost = 0; //DEFAULT 0
+	public static int reproEnergyCost = 0; //DEFAULT 0
+	public static final int lifeEnergyCost = 10; //energy consumed per turn just for living, multiplied by neuro
+	
+	public static final int regenThreshold = 20; //DEFAULT 20
+	public static final int lowEnergyThreshold = 40; //determine caloric value, and high energy //DEFAULT 40
+	public static final int highEnergyThreshold = 10 * lowEnergyThreshold;
+	public static final double fatiguePenalty = 0.10;
+	public static final int calorieFactor = lowEnergyThreshold / 4; //energy generated per food unit
 	
 	public static int avgFC = 0;
 	public static int avgFE = 0;
@@ -64,20 +103,18 @@ public class WorldState {
 	public static final int streamNumber = 6;
 	public static RandomNumberMaker [] rng0; //FOR PATCH-RESOURCE(spawn/replenish amount, spawn/replenish chance)-MUTATION(pickParent/litterSize, drift/radical chance, gene value)
 	public static RandomNumberMaker [] rng1; //FOR ENTITY'S (Genes, x-coord, y-coord, name/fight decision, woundStuff/mood, food-eat)
-	public static RandomNumberMaker [] rng2; //BATTLE(speed tiebreaker)-TEAM1(target choice, run success, action choice, attack-crit, attack-dodge)
+	public static RandomNumberMaker [] rng2; //BATTLE(speed tiebreaker)-(target choice, run success, action choice, attack-crit, attack-dodge)
 	public static RandomNumberMaker [] rng3; //ACTIONS(priority choice, harvest, action choice, direction choice, persona chance
 	//public static RandomNumberMaker [] rng4; //RESERVED
 	public static RandomNumberMaker rngMove; //Movement
 		
 	//World Constants/Counters
-	public static final double driftFactor = 0.10; //Drift Mutation chance //TODO
-	public static final double driftAmount = 0.05; //Drift Mutation range //TODO
-	public static final double radicalMutation = 0.01; //radical mutation chance //TODO
+
 	public static final int maxLitter = 20;
 	private static int counterID = 1;
 	public static int sitMax = 10;
-	public static int baseEnergy = 100; //TODO
 	
+
 	//world/patch/window dimensions
 	//World Size must be be divisible by patch size, or else it will BREAK
 	public static final int wLength = 1200; 
@@ -96,7 +133,7 @@ public class WorldState {
 	public static final int [] terrainTypes = { 0, 1, 2 };
 	public static final Color [] terrainColor = {Color.green, Color.blue, Color.cyan};
 	public static final String [] terrainName = {"Grassland, Water, Wetland"};
-	public static final double [] terrainProb = { 0.90, 0.05, 0.05}; //must add up to 1.0
+	
 	
 	//---------------------------------------------------------------------
 	//RESOURCE CONSTANTS
@@ -115,14 +152,16 @@ public class WorldState {
 	public static final String [] resourceTypeShape = {"Triangle"};
 	//EXAMPLE: Food is type 0, and represented by triangle. A specific type of food, say Apple which is 0 would be red (and a triangle)
 	
-	public static final double [][] rSpawnChance = { {0.05, 0}, {0, 0.05}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
-	public static final double [][] rReplenishChance = { {0.20, 0}, {0, 0.20}, {0.10, 0.10}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
+	public static final double [][] rSpawnChance = { {0.00, 0}, {0, 1.0}, {1.0, 0.0}};//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
+	public static final double [][] rReplenishChance = { {0.10, 0}, {0, 0.10}, {0.10, 0.10}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
 	public static final double respawnAmountMax = 0.5; //dependant on initial value //NOT USED
 	
 	//outputStuff
 	public static ArrayList<String> EventLog;
 	public static String logFile = "colonialCognitionLog.txt";
-	public static String statFile = "colonialCognitionStats.csv";
+	public static String statFile = "colonialCognitionGenStats.csv";
+	public static String orgFile = "colonialCognitionOrganismData.csv";
+	public static String finalStatFile = "colonialCognitionFinalStats.csv";
 	public static ArrayList<String> nameVault = new ArrayList<String>();
 	public static ArrayList<GeneSequence> geneVault = new ArrayList<GeneSequence>();
 	public static ArrayList<OrgInfo> generationVault = new ArrayList<OrgInfo>();
@@ -135,20 +174,7 @@ public class WorldState {
 	public static String [] names = {"Eddard", "Caitlyn", "Robb", "Jon", "Sansa", "Bran", "Arya", "Rickon", "Brandon", "Rickard", "Ned", "Hoster", "Edmure", "Lysa", "Cersei", "Jaime", "Tywin", "Joanna", "Tyrion", "Joffrey", "Myrcella", "Tommen", "Robert", "Renly", "Stannis", "Melisandra"}; 
 	public static boolean collisionDetection = false;
 	public static int densityAllowance = 2; //max number of organisms per patch
-	public static int resourceCarryConstant = 100; //carryCapacity is multiplied by this constant to find the organism's ability //TODO
 	public static int reproductiveMaturityAge = 13;
-	
-	
-	//ORGANISM ENERGY CONSTANTS
-	public static final int regenThreshold = 20;
-	public static final int lowEnergyThreshold = 40; //TODO determine caloric value, and high energy
-	public static final int highEnergyThreshold = 10 * lowEnergyThreshold;
-	public static final double fatiguePenalty = 0.10;
-	public static final int fightEnergyCost = 0; //TODO energy costs
-	public static final int moveEnergyCost = 0; //TODO energy costs
-	public static int reproEnergyCost = 0; //TODO energy costs
-	public static final int lifeEnergyCost = 10; //energy consumed per turn just for living, multiplied by neuro
-	public static final int calorieFactor = lowEnergyThreshold / 4; //energy generated per food unit
 	
 	//DESPERATION LEVELS
 	public static final int CRITICAL = 4;
@@ -158,10 +184,11 @@ public class WorldState {
 	public static final int NONE = 0;
 	public static final double baseSafety = 0.10; //for decision calculations
 	
-	//FIGHT CONSTANTS
-	public static final int attackConstant = 20;
-	public static final int hpConstant = 200; //TODO basehealth
-	
+
+	/**
+	 * Add a log event string, for log output
+	 * @param newEvent
+	 */
 	public static void addLogEvent(String newEvent)
 	{
 		EventLog.add(newEvent);
@@ -169,6 +196,7 @@ public class WorldState {
 	
 	public static ArrayList<String> getLog()
 	{
+		addLogEvent("");
 		return EventLog;
 	}
 	
@@ -254,7 +282,7 @@ public class WorldState {
 	}
 
 	/**
-	 * @param generationVault the generationVault to set
+	 * @param generationVault add OrgInfo to the GenerationVault
 	 */
 	public static synchronized void addGenerationVault(
 			OrgInfo g) {

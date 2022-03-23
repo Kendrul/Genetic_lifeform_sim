@@ -56,10 +56,10 @@ public class OrganismGFX{
 	 */ 
 	public void move(Patch target) throws AWTException {
 		//TODO IMPLEMENT THIS
-		if (owner.getBattlePenalty() > 0.9) canMove = false;
+		//if ((owner.getBattlePenalty() > 0.9) || owner.getMovePoints() <1) canMove = false;
+		if ((owner.getBattlePenalty() > 0.9)) canMove = false;
 		else canMove = true;
 	if(canMove) {
-		
 		int dX = target.getX() - locationX + 1, tX;;
 		int dY = target.getY() - locationY + 1, tY;
 		//this info will be used to erase former position block on the grid
@@ -152,6 +152,7 @@ public class OrganismGFX{
 			//grid.fillCell(locationX, locationY, this);
 		}
 		//grid.repaint();
+		//owner.decMovePoints();
 	}
 }
 	
@@ -162,80 +163,103 @@ public class OrganismGFX{
 	 */
 public void randomMove() throws AWTException {
 		
-		if (owner.getBattlePenalty() > 0.9) canMove = false;
+	//if ((owner.getBattlePenalty() > 0.9) || owner.getMovePoints() < 1) canMove = false;
+	if ((owner.getBattlePenalty() > 0.9)) canMove = false;
 		else canMove = true;
 	if(canMove) {
 		
 		//this info will be used to erase former position block on the grid
-		//grid.setFormerPosition(locationX, locationY);
 		setFormerPosition(locationX, locationY);
-		int attempt = 0, attemptMax = 8;			
+		int attempt = 0, attemptMax = 8, spot, tlocationX=locationX, tlocationY=locationY;	
+		int [] moveVector;
 		
-		tryAnotherDirectionR: //a convenient goto label
-		while(true){
-			direction = random();
-			
-			//I decided to model locomotion using the 8 surrounding blocks/patches 
-			switch(direction){
-			case 1: locationY = locationY - 1; //1 is up toward 12 o'clock
+		if (locationX == 0 && locationY == 0) moveVector = new int[]{3, 4, 5};
+		else if (locationX == 0 && locationY > patchYnum-1) moveVector = new int[]{1,2,3};
+		else if (locationX > patchXnum-1 && locationY > patchYnum-1) moveVector = new int[]{1,7,8};
+		else if (locationX > patchXnum-1 && locationY == 0) moveVector = new int[]{5,6,7};
+		else if (locationX == 0) moveVector = new int[]{1,2,3, 4, 5};
+		else if (locationY == 0) moveVector = new int[]{3,4,5,6,7};
+		else if (locationX > patchXnum-1) moveVector = new int[]{1,2,5,6,7,8};
+		else if (locationY > patchYnum-1) moveVector = new int[]{1,2,3,7,8};
+		else moveVector = new int[]{1,2,3,4,5,6,7,8};
+		
+		while(moveVector.length > 0){
+			spot = (WorldState.rngMove.rInt(moveVector.length));
+			direction = moveVector[spot];
+						switch(direction){
+			case 1: tlocationY = locationY - 1; //1 is up toward 12 o'clock
 				break;
-			case 2: locationX = locationX + 1; locationY = locationY - 1; //2 is up-right toward 1.5 o'clock
+			case 2: tlocationX = locationX + 1; tlocationY = locationY - 1; //2 is up-right toward 1.5 o'clock
 				break;
-			case 3: locationX = locationX + 1; //2 is right toward 3 o'clock
+			case 3: tlocationX = locationX + 1; //2 is right toward 3 o'clock
 				break;
-			case 4: locationX = locationX + 1; locationY = locationY + 1; //4 is down-right toward 4.5 o'clock
+			case 4: tlocationX = locationX + 1; tlocationY = locationY + 1; //4 is down-right toward 4.5 o'clock
 				break;
-			case 5: locationY = locationY + 1; //5 is down toward 6 o'clock
+			case 5: tlocationY = locationY + 1; //5 is down toward 6 o'clock
 				break;
-			case 6: locationX = locationX - 1; locationY = locationY + 1; //6 is down-left toward 7.5 o'clock
+			case 6: tlocationX = locationX - 1; tlocationY = locationY + 1; //6 is down-left toward 7.5 o'clock
 				break;
-			case 7: locationX = locationX - 1; //7 is left toward 9 o'clock
+			case 7: tlocationX = locationX - 1; //7 is left toward 9 o'clock
 				break;
-			case 8: locationX = locationX - 1; locationY = locationY - 1; //2 is up-left toward 10.5 o'clock
+			case 8: tlocationX = locationX - 1; tlocationY = locationY - 1; //2 is up-left toward 10.5 o'clock
 				break;
 			}
-			
-			//created some boundary rules
-			if (locationX < 0 || locationX > patchXnum - 1 || locationY < 0 || locationY > patchYnum - 1){
+			if (tlocationX < 0 || tlocationX > patchXnum - 1 || tlocationY < 0 || tlocationY > patchYnum - 1){
 				
-				//undoing the operation from the previous switch statement (neutralizing worm hole phenomena at boundary layer)
 				switch(direction) {
-				case 1: locationY = locationY + 1; //1 is up toward 12 o'clock
+				case 1: tlocationY = tlocationY + 1; //1 is up toward 12 o'clock
 					break;
-				case 2: locationX = locationX - 1; locationY = locationY + 1; //2 is up-right toward 1.5 o'clock
+				case 2: tlocationX = tlocationX - 1; tlocationY = tlocationY + 1; //2 is up-right toward 1.5 o'clock
 					break;
-				case 3: locationX = locationX - 1; //2 is right toward 3 o'clock
+				case 3: tlocationX = tlocationX - 1; //2 is right toward 3 o'clock
 					break;
-				case 4: locationX = locationX - 1; locationY = locationY - 1; //4 is down-right toward 4.5 o'clock
+				case 4: tlocationX = tlocationX - 1; tlocationY = tlocationY - 1; //4 is down-right toward 4.5 o'clock
 					break;
-				case 5: locationY = locationY - 1; //5 is down toward 6 o'clock
+				case 5: tlocationY = tlocationY - 1; //5 is down toward 6 o'clock
 					break;
-				case 6: locationX = locationX + 1; locationY = locationY - 1; //6 is down-left toward 7.5 o'clock
+				case 6: tlocationX = tlocationX + 1; tlocationY = tlocationY - 1; //6 is down-left toward 7.5 o'clock
 					break;
-				case 7: locationX = locationX + 1; //7 is left toward 9 o'clock
+				case 7: tlocationX = tlocationX + 1; //7 is left toward 9 o'clock
 					break;
-				case 8: locationX = locationX + 1; locationY = locationY + 1; //2 is up-left toward 10.5 o'clock
+				case 8: tlocationX = tlocationX + 1; tlocationY = tlocationY + 1; //2 is up-left toward 10.5 o'clock
 					break;
-				}
-				continue tryAnotherDirectionR;
+				}	
+			}	
+										
+			if (!WorldState.collisionDetection ||  grid.getPatchGrid()[tlocationX][tlocationY].isHasEntity() == false || grid.getPatchGrid()[tlocationX][tlocationY].population() < WorldState.densityAllowance) {
+				locationX = tlocationX;
+				locationY = tlocationY;
+				grid.getPatchGrid()[tlocationX][tlocationY].setTheE(owner);
+				grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
+				if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has wandered from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
+				Starter.getStats().incWanderMoves(1);
+				Starter.getTurnStats().incWanderMoves(1);
+				break; //found a spot to move to
 			}
 			else {
-				if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance) break;
-				else {
-					attempt++;			
-					if (attempt < attemptMax) continue tryAnotherDirectionR;
-				}
-				}
-		}
+				if (moveVector.length == 1) break; //no viable moves
+				
+			 int [] tVector = new int[moveVector.length - 1];
+			 for(int i = 0; i < tVector.length; i++)
+			 {
+				 if (i >= spot || spot != moveVector.length-1) tVector[i] = moveVector[i+1];
+				 else tVector[i] = moveVector[i+1];
+			 }
+			 moveVector = tVector.clone();
+			 tVector = null;
+			}
+			
+		}//end while
 		
-		if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance){
+		/*if (!WorldState.collisionDetection ||  grid.getPatchGrid()[locationX][locationY].isHasEntity() == false|| grid.getPatchGrid()[locationX][locationY].population() < WorldState.densityAllowance){
 			grid.getPatchGrid()[locationX][locationY].setTheE(owner);
 			grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 			if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has wandered from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
 			Starter.getStats().incWanderMoves(1);
 			Starter.getTurnStats().incWanderMoves(1);
-		}
-
+		}*/
+		
+		//owner.decMovePoints();
 	}
 }
 
@@ -265,12 +289,12 @@ public void randomMove() throws AWTException {
 	public void beginHunt() throws AWTException{
 		//when an organism is looking for something specific, but can't see it (ex: food), tends to prefer moving far away
 		
-		if (owner.getBattlePenalty() > 0.9) canMove = false;
+		if ((owner.getBattlePenalty() > 0.9) || owner.getMovePoints() < 1) canMove = false;
 		else {
 			canMove = true;
 		
 			double roll = WorldState.rng3[3].rDouble();
-			if ( roll != totalRandomMoveChance) {
+			if ( roll != totalRandomMoveChance) { //disabled
 				//erratic movement pattern
 				//TODO
 				randomMove();
@@ -363,6 +387,7 @@ public void randomMove() throws AWTException {
 				Starter.getStats().incHuntMoves(1);
 				Starter.getTurnStats().incHuntMoves(1);
 			}
+			owner.decMovePoints();
 		}//canMove
 	}
 	

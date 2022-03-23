@@ -1,8 +1,13 @@
+/*EventPack.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class handles interactions between Organisms, reproduction, and reflections code
+ * 
+ */
 import java.awt.AWTException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Random;
-
 
 public class EventPack {
 
@@ -247,7 +252,7 @@ public class EventPack {
 		if (giver == null || receiver == null || r == null) return; //just in case of broken links
 		if (giver.findResource(r)) {
 			amount = Math.floorDiv(r.getAmount(), 2); //OVERRIDE, GIVE A MAX OF HALF
-			giver.subResource(r, -amount);
+			giver.subResource(r, amount);
 			Resource r2 = new Resource(r, amount);
 			receiver.addResource(r2, r2.getAmount());
 			if (!isTheft){
@@ -342,8 +347,10 @@ public class EventPack {
 		Fight battle = new Fight(a.getFighter(), b.getFighter());
 		Starter.getGrid().getPatch(a.getPoint()).setLocalEvent("F");
 		BattleState winner = battle.fightSim();
-		if (winner != null) winner.getOwner().incFightWon(1);
-		return winner.getOwner();
+		if (winner != null){
+			winner.getOwner().incFightWon(1);	
+			return winner.getOwner();
+		} else return null;
 	}
 	
 	public static void battleWrapper(Organism a, Organism b, boolean aStartedIt, boolean aboutFood)
@@ -363,7 +370,7 @@ public class EventPack {
 				Starter.getTurnStats().incFightDeath(1);
 			}
 		
-		winner.incSitCounter(1);
+		if (winner != null) winner.incSitCounter(1);
 	}
 	
 	public static void askMate(Organism asker, Organism responder) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException

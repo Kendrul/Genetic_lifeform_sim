@@ -1,4 +1,9 @@
-
+/*GenetoPhenotype.java
+ * CPSC 565 W2016: Project
+ * Emil Emilov-Dulguerov and Jason Schneider
+ * This class contains the methods to translate GeneSequence values into Phenotype values
+ * 
+ */
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -10,14 +15,14 @@ public class GeneToPhenotype {
 	
 	double[] genoArray; // = new double[27];
 	String[] genoArrayNames;
-	double weight, limbLength, boneDiameter, limbStructuralStrength, osteocyteGenesisEfficiency;
-	double muscleMass, muscleProteinSynthesis, myocyteGenesisEfficiency;
-	double muscleSpeed, muscleEndurance, muscleStrength;
-	double neuralMass, perceptionRadius, hostility, moodPositive, fightResponse, colonialCognitionCapacity; 
-	double neurocyteGenesisEfficiency; 
-	double eyeSize, cranialSize, facialLength, facialWidth; 
-	double generalPhenotype; 
-	double agreeability;
+	double weight=0.0, limbLength=0.0, boneDiameter=0.0, limbStructuralStrength=0.0, osteocyteGenesisEfficiency=0.0;
+	double muscleMass=0.0, muscleProteinSynthesis=0.0, myocyteGenesisEfficiency=0.0;
+	double muscleSpeed=0.0, muscleEndurance=0.0, muscleStrength=0.0;
+	double neuralMass=0.0, perceptionRadius=0.0, hostility=0.0, moodPositive=0.0, fightResponse=0.0, colonialCognitionCapacity=0.0; 
+	double neurocyteGenesisEfficiency=0.0; 
+	double eyeSize=0.0, cranialSize=0.0, facialLength=0.0, facialWidth=0.0; 
+	double generalPhenotype=0.0; 
+	double agreeability=0.0;
 	//double trade;
 	boolean isDebug = WorldState.isDebug;
 	 
@@ -39,14 +44,15 @@ public class GeneToPhenotype {
 		fightResponse = getFightResponse(); 
 		colonialCognitionCapacity = getColonialCognitionCapacity(); 
 		weight = weight();
+		osteocyteGenesisEfficiency = getOsteocyteGenesisEfficiency();
+		myocyteGenesisEfficiency = getMyocyteGenesisEfficiency();
+		neurocyteGenesisEfficiency = getNeurocyteGenesisEfficiency();
 		eyeSize = getEyeSize();
 		facialLength = getFacialLength();
 		facialWidth = getFacialWidth(); 
 		cranialSize = getCranialSize(); 
 
-		osteocyteGenesisEfficiency = getOsteocyteGenesisEfficiency();
-		myocyteGenesisEfficiency = getMyocyteGenesisEfficiency();
-		neurocyteGenesisEfficiency = getNeurocyteGenesisEfficiency();
+
 				
 		generalPhenotype = getGeneralPhenotype();
 		//CulturalPhenotype Billy_Bob_Culture = new CulturalPhenotype(generalPhenotype);
@@ -129,7 +135,7 @@ public class GeneToPhenotype {
 			if(genoArrayNames[i].contains("Osteo") && genoArrayNames[i].contains("Width")){
 				boneDiameter = genoArray[i];
 			}
-			limbStructuralStrength = limbLength/boneDiameter; //ratio between length and width determines
+			limbStructuralStrength = (limbLength*0.5 +  boneDiameter*1.5)/2; //ratio between length and width determines
 			//if(retval = str1.contains(cs1)){                //structural strength
 			//limbLength = 	
 		}	
@@ -163,7 +169,7 @@ public class GeneToPhenotype {
 			}
 			 	
 		}
-		muscleSpeed /= muscleMass; //the bigger the ratio, the greater the portion of the 
+		muscleSpeed = (muscleSpeed + muscleMass)/2; //the bigger the ratio, the greater the portion of the 
 		//if(retval = str1.contains(cs1)){    //muscle that has fast twitch fibers; thus the faster it will be
 		//limbLength =
 		return muscleSpeed;
@@ -230,13 +236,13 @@ public class GeneToPhenotype {
 			} 
 		}
 		hostility = (neuralMass + hostility)/2;
-		hostility = (hostility + (1 - getMood()))/2; //(1 - getMood) will give us negative mood
+		hostility = (hostility + (1.0- getMood()))/2; //(1.0- getMood) will give us negative mood
 		return hostility; 
 	}
 	
 	
 	public double getAgreeability(){
-		agreeability = 1 - getHostility();
+		agreeability = 1.0- getHostility();
 		
 		return agreeability; 
 	}
@@ -261,7 +267,7 @@ public class GeneToPhenotype {
 				fightResponse = genoArray[i];
 			} 
 		}
-		fightResponse = (hostility + (1-moodPositive) + (fightResponse * 2))/4;
+		fightResponse = (hostility + (1.0-moodPositive) + (fightResponse * 2))/4;
 		return fightResponse; 
 	}
 	
@@ -338,7 +344,7 @@ public class GeneToPhenotype {
 				neurocyteGenesisEfficiency = genoArray[i];
 			} 
 			if(genoArrayNames[i].contains("Neuro") && genoArrayNames[i].contains("Protein")){
-				myocyteGenesisEfficiency += genoArray[i]; // would capture this 8 times (cause 8 neuro proteins)
+				neurocyteGenesisEfficiency += genoArray[i]; // would capture this 8 times (cause 8 neuro proteins)
 			}
 		}
 		neurocyteGenesisEfficiency /= 9; 

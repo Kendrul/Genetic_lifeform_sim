@@ -1,13 +1,19 @@
-
+/*BattleState.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class acts as an interface between Organism and Fight
+ * 
+ */
 
 import java.util.Random;
 
 public class BattleState {
 	
-	Organism owner;
-	boolean isDebug = WorldState.isDebug;
-	boolean runner;
-	boolean cornered;
+	private Organism owner;
+	private boolean isDebug = WorldState.isDebug;
+	private boolean runner;
+	private boolean cornered;
+	private double flightRisk;
 
 	int teamNumber;
 	
@@ -38,8 +44,8 @@ public class BattleState {
 		//if the entity is too wounded, it does nothing
 		if (owner.getBattlePenalty() < 0.75) {
 		double roll = WorldState.rng2[3].rDouble();
-		if (owner.getBattlePenalty() > 0.5) roll -= (owner.getBattlePenalty() * 2); //wounded animal more likely to run
-		if (roll < owner.getFlightTendency()) {
+		//if (owner.getBattlePenalty() > 0.5) roll -= (owner.getBattlePenalty() * 2); //wounded animal more likely to run
+		if (roll < (flightRisk)) {
 			//chosen to run
 			return false;
 		}//fight chosen
@@ -151,11 +157,11 @@ public class BattleState {
 	}
 
 	public double getFlightTendency() {
-		return owner.getFlightTendency();
+		return flightRisk;
 	}
 
 	public void setFlightTendency(double flightTendency) {
-		owner.setFlightTendency(flightTendency);
+		flightRisk = flightTendency * WorldState.baseFlight;
 	}
 	
 	public void setRunner(boolean ran)

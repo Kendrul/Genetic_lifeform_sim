@@ -1,3 +1,10 @@
+/*Fight.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class facilitates combat between two organisms
+ * 
+ */
+
 import java.util.Random;
 
 
@@ -11,9 +18,9 @@ public class Fight {
 	boolean isDebug = WorldState.isDebug, ranAway;
 	
 	//CONSTANTS
-	private final double retreatFail = 0.1;
-	private final double retreatSuccess = 0.9;
-	private final double retreatTie = 0.5;
+	private final double retreatFail = 0.01;
+	private final double retreatSuccess = 0.99;
+	private final double retreatTie = 0.75;
 	private final int BOB = 1;
 	private final int ROB = 2;
 	
@@ -35,9 +42,11 @@ public BattleState fightSim()
 	while (((bob.getHp() > 0) && (rob.getHp() > 0)) & !ranAway)
 	{
 		choice = 2;
-		if ((bob.getWoundPenalty() > 0.75) && (bob.getWoundPenalty() > 0.75))
-		{
-			break;
+		if ((bob.getWoundPenalty() > 0.75) && (rob.getWoundPenalty() > 0.75))
+		{//noth organisms are too wounded to continue
+			if (isDebug) System.out.println("The fight was a draw, both fighters are too weak to continue.");
+			WorldState.addLogEvent("The fight was a draw, both fighters are too weak to continue.");
+			return null;
 		}
 		if (bob.battleSpeed() == rob.battleSpeed())
 		{//they have the same speed, randomly pick
@@ -68,16 +77,32 @@ public BattleState fightSim()
 	if ((rob.getHp() <= 0) || (runnerRunner == ROB)){
 		//bob won
 		if (isDebug) System.out.println(bob.getName() + " wins the fight, with " + bob.getHp() + " health remaining.");
-		WorldState.addLogEvent(bob.getName() + " wins the fight, with " + bob.getHp() + " health remaining.");
-		return bob;
+		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + bob.getName() + " wins the fight, with " + bob.getHp() + " health remaining.");
+		if (runnerRunner == ROB) 
+			{
+				bob.getOwner().incFightWon(1);
+				Starter.getStats().incFledEvents(1);
+				Starter.getTurnStats().incFledEvents(1);
+				rob.setRunner(false); //reset value
+				return null;
+			}
+		else return bob;
 	}
 	else if ((bob.getHp() <= 0) || (runnerRunner == BOB)){
 		//rob won
 		if (isDebug) System.out.println(rob.getName() + " wins the fight, with " + rob.getHp() + " health remaining.");
-		WorldState.addLogEvent(rob.getName() + " wins the fight, with " + rob.getHp() + " health remaining.");
-		return rob;
+		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + rob.getName() + " wins the fight, with " + rob.getHp() + " health remaining.");
+		if (runnerRunner == BOB) 
+		{
+			rob.getOwner().incFightWon(1);
+			Starter.getStats().incFledEvents(1);
+			Starter.getTurnStats().incFledEvents(1);
+			bob.setRunner(false); //reset value
+			return null;
+		}
+		else return rob;
 	} else
-	{//a draw
+	{//a draw, should not reach this code
 		if (isDebug) System.out.println("The fight was a draw, both fighters are too weak to continue.");
 		WorldState.addLogEvent("The fight was a draw, both fighters are too weak to continue.");
 		return null;
@@ -148,7 +173,7 @@ private boolean flight(BattleState runner, BattleState chaser)
 private void escaped(BattleState runner)
 {//updates flag (and debugMode output) for a successful escape
 	if (isDebug) System.out.println(runner.getName() + " fled the fight.");
-	WorldState.addLogEvent(runner.getName() + " fled the fight.");
+	WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + runner.getName() + " fled the fight.");
 	runner.setRunner(true);
 	ranAway = true;
 	if (runner.equals(bob)) runnerRunner = BOB;

@@ -1,3 +1,9 @@
+/* Organism.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class handles most of the Organism related calculations, including decision making
+ * 
+ */
 import java.awt.AWTException;
 import java.awt.Point;
 import java.lang.reflect.Field;
@@ -21,6 +27,7 @@ public class Organism implements Comparable{
 	private int regenThreshold = WorldState.regenThreshold;
 	private int brainEnergyConsumption;
 	private int actionPoint;
+	private int movePoint;
 	private int goal; //0 food, 1 safety, 2 repro, 3 explore/none, 4 share
 	private Patch target;
 	private boolean aSexual = false;
@@ -37,13 +44,14 @@ public class Organism implements Comparable{
 	private double flightTendency; //chance to decide to run away (1 - fightResponse)
 	//------------------------------------------------------------------
 	
-	private final int ap = 2;
+	private final int ap = 1;
 	private int resourceCarryAmount; //current amount of carried weight
+	private double muscleEndurance;
 	private ArrayList<Resource> inventory;
 	
 	//behaviour modifiers
 	private double hostility;
-	private int paranoiaLevel;
+	private int paranoiaLevel = 0;
 	
 	private double woundPenalty;
 	private double fatiguePenalty;
@@ -68,6 +76,12 @@ public class Organism implements Comparable{
 	private int fightWon = 0;
 	private int foodStolen = 0;
 	private int foodShared = 0;
+	
+	//DECISION MAKER
+	private int foodPriority; //default
+	private int safetyPriority;
+	private int reproPriority ;
+	private int explorePriority;
 	
 	//TBI
 	/**
@@ -200,7 +214,7 @@ public class Organism implements Comparable{
 	public double getBattlePenalty() {
 		double p = woundPenalty;
 		if (energy < 0) p += WorldState.fatiguePenalty;
-		return p;
+		return 0;
 	}
 
 	public void setWoundPenalty(double woundPenalty) {
@@ -229,10 +243,27 @@ public class Organism implements Comparable{
 	public void resetAp()
 	{
 		actionPoint = ap;
+		//movePoint = ap;
 		
-		if (kinetics.getSpeedOfLocomotion() > 0.75) actionPoint += 3;
-		else if (kinetics.getSpeedOfLocomotion() > 0.5) actionPoint += 2;
-		else if (kinetics.getSpeedOfLocomotion() > 0.25) actionPoint += 1;
+		if (kinetics.getSpeedOfLocomotion() > 0.75) 
+		{	
+			actionPoint += 3;
+				//movePoint += 3;
+		}
+		else if (kinetics.getSpeedOfLocomotion() > 0.5) 
+		{	
+			actionPoint += 2;
+				//movePoint += 2;
+		}
+		else if (kinetics.getSpeedOfLocomotion() > 0.25) 
+		{
+			actionPoint += 1;
+				//movePoint += 1;
+		}	
+		//if (muscleEndurance > 0.75) actionPoint += 3;
+		//else if (muscleEndurance > 0.50) actionPoint += 2;
+		//else if (muscleEndurance > 0.25) actionPoint += 1;
+			
 	}
 	
 	public void action(int turn) throws AWTException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException
@@ -241,16 +272,33 @@ public class Organism implements Comparable{
 		//TODO placeMarker for easy finding
 		//moodSet();
 		age++;
+		info.age = Integer.toString(age);
 		changeEnergyLevel(-brainEnergyConsumption);
 		regeneration();
 		int action;
-		if (hp <= 0) return; //dead
+		
+		/*
+		if (hp <= 0) {
+			if(energy > 0) {
+				Starter.entityDeath(this, "Wounds");
+				Starter.getStats().incWoundDeath(1);
+				Starter.getTurnStats().incWoundDeath(1);
+			}
+			else {
+				Starter.entityDeath(this, "Starved");
+				Starter.getStats().incStarveDeath(1);
+				Starter.getTurnStats().incStarveDeath(1);
+			}
+			return; //dead
+		}*/
+		
 		if ((sitCounter > 0) && (goal != 4))
 		{//currently acting out a different event, do nothing
 			sitCounter--;
 			return;
 		} else if (goal == 4){
 			action = helpMoveOptions(theOrg.getSight().mobCount());
+			sitCounter = 0;
 		}else{
 			action = decideTurn();
 		if (target == null) action = -2;//something broke, move random
@@ -285,7 +333,8 @@ public class Organism implements Comparable{
 		case 6: theOrg.hunt();
 				break;
 		case 7 : 
-			actionPoint =0; //nowhere to go
+			actionPoint = 0; //nowhere to go
+			//movePoint = 0;
 			break; 
 		case 8: theOrg.move(target);
 				EventPack.askMate(this, theOrg.getPatch().getTheE());
@@ -314,7 +363,7 @@ public class Organism implements Comparable{
 			if (roll > 0.75) {//poor health worsened, organism may die
 				int subHp = maxHp / 10;
 				setHp(hp - maxHp);
-				if (hp < 0) {
+				if (hp <= 0) {
 					WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has died due to it's poor health and/or wounds.");
 					Starter.getStats().incWoundDeath(1);
 					Starter.getTurnStats().incWoundDeath(1);
@@ -332,7 +381,7 @@ public class Organism implements Comparable{
 		{//organism is beginning to starve, it's health declines
 			int subHp = maxHp / 10;
 			setHp(hp - maxHp);
-			if (hp < 0) {
+			if (hp <= 0) {
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has starved to death.");
 				Starter.getStats().incStarveDeath(1);
 				Starter.getTurnStats().incStarveDeath(1);
@@ -364,7 +413,6 @@ public class Organism implements Comparable{
 	}
 	
 	
-
 	/**
 	 * @param foodEaten the foodEaten to set
 	 */
@@ -437,6 +485,7 @@ public class Organism implements Comparable{
 		for (int i = 0; i < rp.getFieldArrayNames().length; i++){
 			if(rp.getFieldArrayNames()[i].contains("fightResponse")){
 				flightTendency = rp.getFieldArrayValues()[i];
+				fighter.setFlightTendency(flightTendency);
 			} 
 			if(rp.getFieldArrayNames()[i].contains("neural")){
 				brain = rp.getFieldArrayValues()[i];
@@ -449,6 +498,9 @@ public class Organism implements Comparable{
 			} 			
 			if(rp.getFieldArrayNames()[i].contains("hostility")){
 				hostility = rp.getFieldArrayValues()[i];
+			} 
+			if(rp.getFieldArrayNames()[i].contains("muscleEndurance")){
+				muscleEndurance = rp.getFieldArrayValues()[i];
 			} 
 		}
 		//calculates how much energy consumed per turn just from existing
@@ -491,7 +543,7 @@ public class Organism implements Comparable{
 	}
 	
 	public boolean findResource(int num)
-	{
+	{//checks for the organism carrying a specific resource
 		for (int i = 0; i < inventory.size(); i++)
 		{
 			if(inventory.get(i).getResourceNum() == num) return true;
@@ -500,6 +552,7 @@ public class Organism implements Comparable{
 	}
 	
 	public boolean findResource(Resource r){
+		//checks for the organism carrying a specific resource
 		if (r == null) return false;
 		for (int i = 0; i < inventory.size(); i++)
 		{
@@ -530,7 +583,7 @@ public class Organism implements Comparable{
 	}
 	
 	public int potentialEnergy()
-	{
+	{//calculates how much food the organism has (energy is 1 to 1 ratio with food)
 		int sum = 0;
 		for(int i = 0; i < inventory.size(); i++){
 			if(inventory.get(i).getResourceType() == WorldState.resourceType[0])
@@ -650,11 +703,7 @@ public class Organism implements Comparable{
 		else energy += amount;
 	}
 	
-	//DECISION MAKER
-	private int foodPriority; //default
-	private int safetyPriority;
-	private int reproPriority ;
-	private int explorePriority;
+
 	
 	public int decideTurn() throws AWTException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException
 	{//this function helps the organism decided what action it should pursue
@@ -670,13 +719,13 @@ public class Organism implements Comparable{
 			return -1; //can't act
 		}
 		
-		
+		//set priorities back to default
 		theOrg.organismPerceives();
 		int foodPriority = WorldState.NONE; //default
 		int safetyPriority = WorldState.NONE;
 		int reproPriority = WorldState.NONE;
 		int explorePriority = WorldState.LOW;
-		paranoia();
+		//paranoia();
 		int p = paranoiaLevel;
 		
 		
@@ -796,6 +845,8 @@ public class Organism implements Comparable{
 				return decideTurn();
 			} else 
 			{//check nearby perceived patches for food
+				//if (movePoint < 1) return 7; //can't move any further
+				if (actionPoint < 1) return 7;
 				Patch spot = theOrg.getSight().findFoodPatch();
 				if (spot != null)
 				{//found a spot
@@ -866,6 +917,8 @@ public class Organism implements Comparable{
 	//decided to run, or current location is empty (aside from THIS organism)
 	if (run == true || o == null){
 		//evaluate the safest escape route
+		//if (movePoint < 1) return 7; //can't move
+		if (actionPoint < 1) return 7; //can't move
 		d = safetyMoveOptions();
 		if (d == 7) 
 			{//nowhere to move
@@ -1044,7 +1097,7 @@ public class Organism implements Comparable{
 		//meet neutral organism
 		//attack hostile/neutral organism
 		ArrayList<Integer> count = theOrg.getSight().mobCount();
-		int num = 0;
+		/*int num = 0;
 		int dice = WorldState.rng3[3].rInt() % 2;
 		if (count.contains(0) && dice == 0) {
 			//random choose to move to an empty spot
@@ -1056,7 +1109,8 @@ public class Organism implements Comparable{
 		
 				target = theOrg.getSight().getTarget(num);
 				return 9;
-			} else return helpMoveOptions(count);
+			} else */
+				return helpMoveOptions(count);
 	}
 	
 	public int helpMoveOptions(ArrayList<Integer> count){
@@ -1148,7 +1202,7 @@ public class Organism implements Comparable{
 		}	
 		
 		//counts foes as double versus neutral, and modified by its health and flightTendency
-		int p = (int) Math.ceil((foe * 2 * s + neutral * s - friend));
+		int p = (int) Math.ceil((foe * s - friend));
 		if (safetyPriority > WorldState.MEDIUM || p > 3) fighter.setCornered(true);
 		else fighter.setCornered(false);
 
@@ -1245,17 +1299,21 @@ public class Organism implements Comparable{
 		//This is where an organism decides if it wants to attack another organism
 		if (o == null) return 0;
 		double roll = WorldState.rng3[3].rDouble();
-		double threshold = pheno.getHostility();
+		Coupling c = findCouple(o);
+		//double threshold = pheno.hostility * 0.5;
+		double threshold;
+		if (c.isPositiveCouple()) threshold = (c.getCoupleAmount() /2) +0.5;
+		else threshold = 1 - c.getCoupleAmount() ;
 		
 		/**/ //Organism is starving, sick/wounded and thus desperate
-			Coupling c = findCouple(o);
+		/*
 			if ((foodPriority == WorldState.CRITICAL) && ((woundPenalty > 0) && (woundPenalty < 0.5))) {			
 				if ((c.isPositiveCouple())) threshold *= (1-c.getCoupleAmount());//good coupling reduces willingness to attack
 				else threshold *= (1+c.getCoupleAmount());//placeholder
 			}else {
 				//determine fear VS Bully VS Aggressor
-				int mState = 0; //0 = neutral, 1 = fear, 2 = Bully, 3 = Aggressor
-				mState = personality();
+				int mState = 2; //0 = neutral, 1 = fear, 2 = Bully, 3 = Aggressor
+				//mState = personality();
 				
 				switch (mState) {
 				case 0 : //neutral
@@ -1264,7 +1322,8 @@ public class Organism implements Comparable{
 					threshold *= (1 + (paranoiaLevel/10));//willingness to fight magnified by paranoia
 					break;
 				case 2 : //bully (strength + paranoia low)
-					threshold *= 1/((1 + ((paranoiaLevel)/20)) - weaknessPerception(o));
+					//threshold *= 1/((1 + ((paranoiaLevel)/20)) - weaknessPerception(o));
+					threshold *= 1/(1 - weaknessPerception(o));
 					break;
 				case 3 : //aggressor (paranoia low)
 					threshold *= 1/(1 + ((paranoiaLevel)/20));
@@ -1276,7 +1335,7 @@ public class Organism implements Comparable{
 /*				if ((!goodMood) && ((mState == 2) || (mState == 3))) {//if in a bad mood and Bully/Aggressor
 					if (askedHelp && c != null && c.isPositiveCouple()) threshold *= 2 - c.getCoupleAmount(); //slight anger
 					else threshold *= 2; //bigger anger
-				}*/
+				}
 							
 					if (c == null) 
 						{//no prior relationship, create it!
@@ -1285,8 +1344,8 @@ public class Organism implements Comparable{
 						}
 						
 				//determine Hate
-				if ((c.isPositiveCouple())) threshold *= (1-c.getCoupleAmount());//good coupling reduces willingness to attack
-				else  threshold *= (1+c.getCoupleAmount());//placeholder				
+				//if ((c.isPositiveCouple())) threshold *= (1-c.getCoupleAmount());//good coupling reduces willingness to attack
+				//else  threshold *= (1+c.getCoupleAmount());//placeholder				
 			}
 			
 		 //*/
@@ -1297,7 +1356,7 @@ public class Organism implements Comparable{
 	
 	private int personality(){
 		int m = 0;
-		double h = pheno.getHostility(), f = flightTendency;
+		double h = pheno.hostility, f = flightTendency;
 		
 		if (h > 0.2) {
 			if ((h >= (f * 0.8)) && (f >= (h * 0.8))) {//hostility and flightTendency are close
@@ -1333,7 +1392,7 @@ public class Organism implements Comparable{
 	
 	private double sensorRoll(double d)
 	{//to calculate a perceived attribute value of another organism based on this organism's perceptionRadius
-		double p = (1-pheno.getPerceptionRadius())/2;
+		double p = (1-pheno.perceptionRadius)/2;
 		double roll1 = WorldState.rng3[4].rDouble();
 		int roll2 = WorldState.rng3[4].rInt() % 2;
 		double result;
@@ -1351,6 +1410,7 @@ public class Organism implements Comparable{
 	public int respondShare(TradeRequest trAsk, Organism a){
 		//this decided how an entity will respond to being asked to share
 		if (potentialEnergy() <= 1) return EventPack.Decline; //not enough food
+		/*
 		double roll = WorldState.rng3[2].rDouble(); 
 		Coupling c = findCouple(a);
 		
@@ -1371,7 +1431,8 @@ public class Organism implements Comparable{
 				if (d == 3) return EventPack.FightEvent;
 				else return EventPack.Decline;
 			}
-		}
+		} */
+		return EventPack.ShareEvent;
 	}//end respondShare
 	
 		//TRADE STUFF NOT IMPLEMENTED
@@ -1463,7 +1524,9 @@ public class Organism implements Comparable{
 			//if(WorldState.rule127) roll = 2;
 			//else roll = (WorldState.rng0[2].rInt() % WorldState.maxLitter) + 1;
 			double m = theOrg.getPatch().getMutation();
-			int e = energyTransfer(roll);
+			//int e = energyTransfer(roll);
+			int e = WorldState.baseEnergy;
+			energy = WorldState.baseEnergy;
 			//e == WorldState.baseEnergy * roll + reproEnergyCost; //OVERRIDE, ensures entity has same amount of energy
 			//hp = maxHp;
 			//woundPenalty = 0;
@@ -1473,6 +1536,7 @@ public class Organism implements Comparable{
 				EventPack.reproductionA(this, m, e);
 			}
 			info.cycle += "r";
+			pairs.clear();
 			//EventPack.reprodDeath(this);
 	}
 	
@@ -1523,7 +1587,7 @@ public class Organism implements Comparable{
 		return energy;
 	}
 	
-	public void rFitCalc(){//TODO
+	public void rFitCalc(){
 		//calculate rFitness based on specified values
 		int [] ruleSet = WorldState.rRuleSet;
 		int ruleNum = WorldState.rRuleNum;
@@ -1531,6 +1595,8 @@ public class Organism implements Comparable{
 		int a;
 		
 		if (!WorldState.useOldRule){
+			//this ruleset allows finetuning for competitive and cooperative interactions in how they lead to the next generation
+			//by choosing which activities factor in, and how they influence the rating (positive or negative)
 			//rule 0, food carried
 			if (ruleSet[0] == 1) fc = potentialEnergy() - WorldState.avgFC;
 			else fc = 0;
@@ -1554,14 +1620,14 @@ public class Organism implements Comparable{
 			else if (ruleSet[2] == 2) bw = -(fightWon- WorldState.avgBN);
 			else bw = 0;
 			//rule 6, agreeability
-			if (ruleSet[2] == 1) a = (int) (100 * (pheno.getAgreeability() - WorldState.avgA));
-			else if (ruleSet[2] == 2) a = (int) (-100 * (pheno.getAgreeability()- WorldState.avgA));
+			if (ruleSet[2] == 1) a = (int) (100 * (pheno.agreeability - WorldState.avgA));
+			else if (ruleSet[2] == 2) a = (int) (-100 * (pheno.agreeability- WorldState.avgA));
 			else a = 0;
 			
 			//formula to determine reproductive-fitness
 			rFitness = fc + fe + fs + ft + bn + bw + a;
-		}else {
-			rFitness = potentialEnergy() - foodStolen + foodEaten + foodShared;
+		}else {//original fitness function below, basically just gave value to picking up and eating food
+			rFitness = (2 * foodEaten - foodStolen) +  potentialEnergy()+ foodShared;
 		}
 	}
 	
@@ -1618,6 +1684,19 @@ public class Organism implements Comparable{
 	 */
 	public int getFoodShared() {
 		return foodShared;
+	}
+	
+	public void removeCouple(Coupling c)
+	{//removes a couple, linked organism is dead
+		pairs.remove(c);
+	}
+	
+	public void decMovePoints(){
+		movePoint--;
+	}
+	
+	public int getMovePoints(){
+		return movePoint;
 	}
 	
 }

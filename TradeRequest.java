@@ -1,4 +1,9 @@
-
+/*TradeRequest.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class contains the details to facilitate the exchange-of/request-for a resource between two organisms
+ * 
+ */
 public class TradeRequest {
 	Resource resource;
 	Organism asker;

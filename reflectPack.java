@@ -1,4 +1,9 @@
-
+/*ReflectPack.java
+ * CPSC 565 W2016: Project
+ * Emil Emilov-Dulguerov and Jason Schneider
+ * This class contains the methods to conduct reflections on GeneSequence, GenetoPhenotype, PhenotypetoKinetics, StatPack, and OrgInfo
+ * 
+ */
 import java.lang.reflect.Field;
 
 

@@ -69,6 +69,7 @@ public class RandomNumberMaker {
 	public synchronized int rInt()
 	{//returns a random int from the maker
 		int x = rng.nextInt();
+		if (x < 0) x *= -1;
 		//last = (double) x;
 		return x;
 	}
@@ -79,57 +80,4 @@ public class RandomNumberMaker {
 		return x;
 	}
 	
-    /**
-     * Generates a pseudo-random exponential variate
-     * 
-	 * @param lambda the lambda for the calculation
-     * @return double returns a pseudo-random double exponential variate
-     */
-	public synchronized double eVariate(double lambda)
-	{//returns an exponentialVariate
-		double u = rDouble();
-		double x = -(1/lambda) * Math.log(1-u);
-		return x;
-	}
-	
-    /**
-     * Generates a pseudo-random poisson variate
-     * 
-	 * @param lambda the lambda for the calculation
-     * @return double returns a pseudo-random double poisson variate
-     */
-	public synchronized double pVariate(double lambda)
-	{//returns a poissonVariate		
-		double y = 0;
-		double L = Math.pow(Math.E, -lambda);
-		double s = 1;
-		double n = 0;
-		
-		//Knut's algorithm
-		do 
-		{
-			y = eVariate(lambda);
-			s *= y;
-			n++;
-		}while (s <= L);//end while
-	
-		return n-1; 
-	}//end pVariate
-
-	public synchronized double nVariate(double mu, double sigma)
-	{	//returns a normally distributed random variate	
-		if (next != -1)
-		{
-			double x = next;
-			next = -1;
-			return x;
-		}
-		
-		double u1 = rDouble();
-		double u2 = rDouble();
-		double x = mu + (sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2));
-		next = mu + (sigma * Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2));
-	
-		return x;	
-	}
 }

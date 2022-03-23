@@ -1,4 +1,9 @@
-
+/* Resource.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class contains resource (food) information
+ * 
+ */
 
 import java.awt.Color;
 

@@ -9,7 +9,7 @@ public class GeneSequence {
 	//Osteogenesis development and regulation
     double gene_Osteo_Pathway_Multiplier = 0.5;
 	double gene_Osteo_Length_ECM = 0.4;
-	double gene_Osteo_Width_ECM = 1 - gene_Osteo_Length_ECM;
+	double gene_Osteo_Width_ECM = 1.0- gene_Osteo_Length_ECM;
 	
 	double gene_Osteo_Morphogenetic_Protein1 = 1; 
 	double gene_Osteo_Morphogenetic_Protein2 = 0;
@@ -24,7 +24,7 @@ public class GeneSequence {
 	//Myogenesis development and regulation
 	double gene_Myo_Pathway_Multiplier = 0.9;
 	double gene_Myo_Fast_Twitch_ECM = 0.3;
-	double gene_Myo_Slow_Twitch_ECM = 1 - gene_Myo_Fast_Twitch_ECM; //total is 1, so the more there are fast twitch the less there
+	double gene_Myo_Slow_Twitch_ECM = 1.0- gene_Myo_Fast_Twitch_ECM; //total is 1, so the more there are fast twitch the less there
 	                                                                //are slow twitch (and vice versa) 
 	double gene_Myo_Morphogenetic_Protein1 = 0;
 	double gene_Myo_Morphogenetic_Protein2 = 0;
@@ -46,14 +46,14 @@ public class GeneSequence {
     //put another way, phenotypically dissimilar entities are instinctively perceived as hostile and therefore the
     //response toward them is a hostile one 
     double gene_Neuro_Morphogenetic_Protein_Hostile = 0.6;
-    double gene_Neuro_Morphogenetic_Protein_Neutral = 1 - gene_Neuro_Morphogenetic_Protein_Hostile;
+    double gene_Neuro_Morphogenetic_Protein_Neutral = 1.0- gene_Neuro_Morphogenetic_Protein_Hostile;
     double gene_Neuro_Morphogenetic_Protein_SelfProjectionPotential = 0.3;
     double gene_Neuro_Morphogenetic_Protein_MoodNegative = 0.3; 
-    double gene_Neuro_Morphogenetic_Protein_MoodPositive = 1 - gene_Neuro_Morphogenetic_Protein_MoodNegative;
+    double gene_Neuro_Morphogenetic_Protein_MoodPositive = 1.0- gene_Neuro_Morphogenetic_Protein_MoodNegative;
     
     //hereditary influence for fight or flight response toward those dynamic entities that are perceived as hostile
     double gene_Neuro_Morphogenetic_Protein_Fight = 0.3;
-    double gene_Neuro_Morphogenetic_Protein_Flight = 1 - gene_Neuro_Morphogenetic_Protein_Fight;
+    double gene_Neuro_Morphogenetic_Protein_Flight = 1.0- gene_Neuro_Morphogenetic_Protein_Fight;
     
     
     //dermal development and regulation
@@ -78,10 +78,10 @@ public class GeneSequence {
     
     public void update()
     {
-    	gene_Osteo_Width_ECM = 1 - gene_Osteo_Length_ECM;
-    	gene_Myo_Slow_Twitch_ECM = 1 - gene_Myo_Fast_Twitch_ECM;
-    	gene_Neuro_Morphogenetic_Protein_Neutral = 1 - gene_Neuro_Morphogenetic_Protein_Hostile;
-    	gene_Neuro_Morphogenetic_Protein_MoodPositive = 1 - gene_Neuro_Morphogenetic_Protein_MoodNegative;
-    	gene_Neuro_Morphogenetic_Protein_Flight = 1 - gene_Neuro_Morphogenetic_Protein_Fight;
+    	gene_Osteo_Width_ECM = 1.0- gene_Osteo_Length_ECM;
+    	gene_Myo_Slow_Twitch_ECM = 1.0- gene_Myo_Fast_Twitch_ECM;
+    	gene_Neuro_Morphogenetic_Protein_Neutral = 1.0- gene_Neuro_Morphogenetic_Protein_Hostile;
+    	gene_Neuro_Morphogenetic_Protein_MoodPositive = 1.0- gene_Neuro_Morphogenetic_Protein_MoodNegative;
+    	gene_Neuro_Morphogenetic_Protein_Flight = 1.0- gene_Neuro_Morphogenetic_Protein_Fight;
     }
 }

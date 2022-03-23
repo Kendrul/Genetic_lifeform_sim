@@ -1,3 +1,9 @@
+/* StatPack.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class contains data for the output files, specifically event/death data
+ * 
+ */
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
@@ -16,6 +22,7 @@ public class StatPack {
 	double fightDeath = 0;
 	double cullDeath = 0;
 	double reproductionDeath = 0;
+	double fledBattleEvents = 0;
 	
 	//food events
 	double foodHarvest = 0;
@@ -64,7 +71,12 @@ public class StatPack {
 	public synchronized void incReplenishEvents(double replenishEvents) {
 		this.replenishEvents += replenishEvents;
 	}
-	
+	/**
+ * @param replenishEvents the replenishEvents to set
+ */
+public synchronized void incFledEvents(double replenishEvents) {
+	fledBattleEvents += replenishEvents;
+}
 	
 	/**
 		 * @param replenishedAmount the replenishedAmount to set

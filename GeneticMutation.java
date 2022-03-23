@@ -1,4 +1,9 @@
-
+/*GeneMutation.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ * This class contains the methods to cause GeneSequence mutation, with 1 or 2 parents
+ * 
+ */
 
 
 import java.lang.reflect.Field;

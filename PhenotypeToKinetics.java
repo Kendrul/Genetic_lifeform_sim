@@ -1,3 +1,9 @@
+/*PhenotypetoKinetics.java
+ * CPSC 565 W2016: Project
+ * Emil Emilov-Dulguerov and Jason Schneider
+ * This class contains the methods to translate PhenoType values into Kinetics Attributes
+ * 
+ */
 import java.lang.reflect.Field;
 
 

@@ -1,5 +1,12 @@
-//For the storage of misc information details
+/*OrgInfo.java
+ * CPSC 565 W2016: Project
+ * Jason Schneider and Emil Emilov-Dulguerov
+ *	For the storage of Organism identifying information details 
+ */
+
+//
 public class OrgInfo {
+	public String simulationRun;
 	public String number;
 	public String name;
 	public String age = "";
@@ -16,6 +23,7 @@ public class OrgInfo {
 	
 	public OrgInfo(int num, String n, int g, int bt)
 	{
+		simulationRun = Integer.toString(Starter.getSimRun());
 		number = Integer.toString(num);
 		name = n;
 		generation = Integer.toString(g);
