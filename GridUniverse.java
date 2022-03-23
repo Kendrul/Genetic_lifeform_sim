@@ -87,8 +87,11 @@ public class GridUniverse extends JPanel{
 					}
 				}
 				
-				if (WorldState.resourceRule == 1 ) cornerClusterRule(ix, jy);
-				else if (WorldState.resourceRule == 2) centerClusterRule(ix, jy);
+
+				if (WorldState.resourceRule == 1 ) twoCornerClusterRule(ix, jy);
+				else if (WorldState.resourceRule == 3) oneClusterRule(ix, jy);
+				else if (WorldState.resourceRule == 2 ) fourCornerClusterRule(ix, jy);
+
 				else patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
 				patchGrid[ix][jy].spawnResource(WorldState.rng0[2].rDouble());
 				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
@@ -97,34 +100,30 @@ public class GridUniverse extends JPanel{
 		WorldState.addLogEvent("The World has been created.");
 	}
 	
-	private void cornerClusterRule(int x, int y){
+
+	private void twoCornerClusterRule(int x, int y){
 		//puts resources in specific spots in the corners
-		if (x == 1 && y == 0) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 2 && y == 2) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 3 && y == 0) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 0 && y == 1) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 0 && y == 3) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 3 && y == 2) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 6 && y == 1) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 59 && y == 39) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 56 && y == 39) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 59 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 58 && y == 38) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 55 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 57 && y == 37) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 58 && y == 36) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+
+		if(x < 8 && y < 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else if (x>=52 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
 		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
 	}
 	
-	private void centerClusterRule(int x, int y){
+	private void oneClusterRule(int x, int y){
 		//puts resources in specific spots in the center
-		if (x == 8 && y == 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 9 && y == 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 9 && y == 9) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 8 && y == 10) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 10 && y == 10) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
-		else if (x == 9 && y == 11) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 1);
-		else if (x == 11 && y == 11) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		//if((x > 24 && y > 14) && (x < 34 && y < 24)) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		if (x>=52 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 2);
+		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
+	}
+	
+	private void fourCornerClusterRule(int x, int y){
+		//puts resources in specific spots in the corners
+		int color = 2;
+		if(x < 8 && y < 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
+		else if (x>=52 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
+		else if(x < 8 && y >= 32) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
+		else if (x>=52 && y < 8) patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, color);
+
 		else patchGrid[x][y] = new Patch(x*WorldState.pLength, y*WorldState.pWidth, 0);
 	}
 	
