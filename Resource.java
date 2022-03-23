@@ -1,4 +1,7 @@
+
+
 import java.awt.Color;
+
 
 
 public class Resource {
@@ -7,6 +10,7 @@ public class Resource {
 	private int resourceNum; //specific resource
 	private Color rColor;
 	private Patch home;
+	private Organism owner;
 	private int amount;
 	private int rShape;
 
@@ -17,10 +21,46 @@ public class Resource {
 		resourceType = type;
 		resourceNum = num;
 		home = location;
+		owner = null;
 		rColor = WorldState.resourceColor[num];
 		rShape = WorldState.resourceShape[num];
+		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
 	}
 	
+	public Resource(Resource clone, int a)
+	{
+		resourceType = clone.getResourceType();
+		resourceNum = clone.getResourceNum();
+		home = null;
+		owner = null;
+		rColor = WorldState.resourceColor[clone.getResourceNum()];
+		rShape = WorldState.resourceShape[clone.getResourceNum()];
+		amount = a;
+	}
+
+	public Resource(int type, int num, Organism own)
+	{
+		resourceType = type;
+		resourceNum = num;
+		home = null;
+		owner = own;
+		rColor = WorldState.resourceColor[num];
+		rShape = WorldState.resourceShape[num];
+		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
+	}
+	
+		public Organism getOwner() {
+		return owner;
+	}
+
+		public String getName()
+		{
+			return WorldState.resourceName[resourceNum];
+		}
+		
+	public void setOwner(Organism owner) {
+		this.owner = owner;
+	}
 	public int getrShape() {
 		return rShape;
 	}
@@ -66,6 +106,16 @@ public class Resource {
 
 	public void setAmount(int amount) {
 		this.amount = amount;
+	}
+	
+	public void removeAmount(int amount)
+	{
+		this.amount -= amount;
+	}
+	
+	public void addAmount(int amount)
+	{
+		this.amount += amount;
 	}
 	
 	

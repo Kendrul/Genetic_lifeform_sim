@@ -1,12 +1,15 @@
+
+
 import java.util.Random;
+
 
 
 public class BattleState {
 	
-	Entity owner;
-	boolean isDebug;
+	Organism owner;
+	boolean isDebug = WorldState.isDebug;
 	boolean runner;
-	Random rng;
+
 	int teamNumber;
 	
 	public int getTeamNumber() {
@@ -19,12 +22,10 @@ public class BattleState {
 	}
 
 
-	public BattleState(Entity theEntity, boolean debugModeOn)
+	public BattleState(Organism theEntity)
 	{
 		owner = theEntity;
-		isDebug = debugModeOn;
 		runner = false;
-		rng = new Random();
 	}
 	
 
@@ -33,16 +34,11 @@ public class BattleState {
 		isDebug = setDebugMode;
 	}
 	
-	public void plant(int seed)
-	{
-		rng = new Random(seed);
-	}
-	
 	public boolean chooseAttack()
 	{//this is where the entity decides if it will fight or flight
 		//if the entity is too wounded, it does nothing
 		if (owner.getWoundPenalty() < 0.75) {
-		double roll = doubleDice();
+		double roll = WorldState.rng2[3].rDouble();
 		if (owner.getWoundPenalty() > 0.5) roll -= (owner.getWoundPenalty() * 2); //wounded animal more likely to run
 		if (roll < owner.getFlightTendency()) {
 			//chosen to run
@@ -52,15 +48,10 @@ public class BattleState {
 			} else return true; //too wounded to run
 	}
 	
-	private double doubleDice()
-	{
-		return rng.nextDouble();
-	}
-	
 	public int attackAction()
 	{
 		if (owner.getWoundPenalty() < 0.75) {
-		double roll = doubleDice();
+		double roll = WorldState.rng2[4].rDouble();
 		
 		if (roll < owner.getCrit()) {
 			return owner.getAttack() * 2;
@@ -76,7 +67,7 @@ public class BattleState {
 	public boolean survivedAttack(int damage, BattleState attacker)
 	{
 		if (damage <= 0) return true;
-		double roll = doubleDice();
+		double roll = WorldState.rng2[5].rDouble();
 		if (roll >= owner.getDodge()) {
 		owner.setHp(owner.getHp() - damage);
 		owner.setWoundPenalty(1.0 - ((double) owner.getHp() / (double) owner.getMaxHp()));
@@ -85,6 +76,7 @@ public class BattleState {
 		//true means entity survived, false means entity has died 
 		if (owner.getHp() <= 0) {
 			if (isDebug) System.out.println(owner.getName() + " was killed.");
+			WorldState.addLogEvent(owner.getName() + " was killed.");
 			return false;
 		}
 		 else return true; }

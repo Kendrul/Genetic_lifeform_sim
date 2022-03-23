@@ -1,135 +1,170 @@
+
+
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Random;
 
+
 public class GeneticMutation {
 
-private Entity mother;
-private Entity father;
-private Entity child;
-private WorldState theWorld;
+private Organism mother;
+private Organism father;
+private Organism child;
 private double mutationFactor;
-private boolean isDebug;
-private Random rng;
+private boolean isDebug = WorldState.isDebug;
 
-public GeneticMutation(Entity dad, Entity mom, double mutation, boolean debugModeOn, WorldState state){
+
+public GeneticMutation(Organism dad, Organism mom, double mutation){
 
 	father = dad;
 	mother = mom;
 	mutationFactor = mutation;
-	isDebug = debugModeOn;
-	rng = new Random();
-	theWorld = state;
 	
 	//TODO stats?
-	child = new Entity();
+	child = new Organism();
 
 }//end constructor
 
-public void plant(int seed)
-{
-    rng = new Random(seed);
-}//end plant
+public GeneticMutation(Organism mom, double mutation){
 
-public void buildGenomeS()
-{
-	ArrayList<Parameter> dadpList = null;
-	ArrayList<Parameter> mompList = null;
-	if (father != null) dadpList = father.getParameterList();
-	if (mother != null) mompList = mother.getParameterList();
-	ArrayList<Parameter> kidpList = new ArrayList<Parameter>();
-	    
-	int size;
-	if (dadpList.size() > mompList.size()) size = dadpList.size();
-	else size = mompList.size();
+	mother = mom;
+	father = mom;
+	mutationFactor = mutation;
 	
-	for (int i = 0; i < size; i++)
-	{
-	        //check if mutation is allowed for this parameter
-		if ((dadpList.get(i) != null) & (dadpList.get(i).getMutatable()))
-		{
-			if (mompList.get(i) != null) kidpList.add(mutate(dadpList.get(i), mompList.get(i)));
-			else kidpList.add(mutate( dadpList.get(i), null));
-		        
-		}//end if-then
-		else if ((mompList.get(i) != null) & (mompList.get(i).getMutatable()))
-		{
-		    kidpList.add(mutate( null, mompList.get(i)));
-		}//end if-else
-	}//end for loop        
+	//TODO stats?
+	child = new Organism();
 
-}//end buildGenome
+}//end constructor
 
-public void buildGenomeA(){
-	ArrayList<Parameter> mompList = null;
-	if (mother != null) mompList = mother.getParameterList();
-	else mompList = father.getParameterList();
-	ArrayList<Parameter> kidpList = new ArrayList<Parameter>();
-	    
-	int size = mompList.size();
-	
-	for (int i = 0; i < size; i++)
-	{
-	        //check if mutation is allowed for this parameter
-		if(mompList.get(i).getMutatable())
-		{
-		    kidpList.add(mutate( null, mompList.get(i)));
-		}//end if-else
-	}//end for loop      
-}//end buildGenomeA
 
-private Parameter mutate(Parameter dpara, Parameter mpara)
-{//establish whether mutation will occur: radical, drift, none
-//pick a parent to take a gene from
-//give that gene, or drift from that gene
+public void newGenomeS()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException
+{
+  reflectPack rd = EventPack.geneFields(father.getGenes());
+  reflectPack rm = EventPack.geneFields(mother.getGenes());
+  GeneSequence kidGene = new GeneSequence();
+  
+  for (int index = 0; index < rd.getFieldArrayNames().length; index++){
+	  if (!(rd.getFieldArrayNames()[index] == "gene_Osteo_Width_ECM") 
+			  && !(rd.getFieldArrayNames()[index] == "gene_Myo_Slow_Twitch_ECM") 
+			  && !(rd.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_Neutral") 
+			  && !(rd.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_MoodPositive")
+			  && !(rd.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_Flight"))
+	  {//all of the above are determined by (1 - someAttribute)
+		  double d = rd.getFieldArrayValues()[index];
+		  double m = rm.getFieldArrayValues()[index];		  
+		  double k = mutatationS(d, m);
+		  setGene(index, k, kidGene);
+	  }//end if-then
+  }//end for loop
+  
+  child.setGenes(kidGene);
+}
 
-	double roll = rng.nextDouble();
-	Parameter temp = null;
-	if (roll <= 0.01) {
-		//radical mutation
-		    boolean pickMom = pickParent(dpara, mpara);
-		if (pickMom)
-		{
-		    temp = mpara.clone();
-		} 
-		else 
-		{
-			temp = dpara.clone();
-		}
-		temp.mutateRandom();
-		return temp;
-	} else if (roll <= (theWorld.getDrift() + mutationFactor)) {
-		//genetic drift
-		boolean pickMom = pickParent(dpara, mpara);
-		roll = rng.nextDouble();
-		roll = (roll *2) - 1;
-		if (pickMom) temp = mpara.clone();
-		else temp = dpara.clone();
-		temp.mutateDrift(roll, mutationFactor);
-		return temp;
-	} else
-	{//no mutation 
-		boolean pickMom = pickParent(dpara, mpara);
-		if (pickMom) return mpara; 
-		else return dpara;
-	}//end if-else-else
-}//end mutate
+public void newGenomeA()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException
+{
+  reflectPack rm = EventPack.geneFields(mother.getGenes());
+  GeneSequence kidGene = new GeneSequence();
+  
+  for (int index = 0; index < rm.getFieldArrayNames().length; index++){
+	  if (!(rm.getFieldArrayNames()[index] == "gene_Osteo_Width_ECM") 
+			  && !(rm.getFieldArrayNames()[index] == "gene_Myo_Slow_Twitch_ECM") 
+			  && !(rm.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_Neutral") 
+			  && !(rm.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_MoodPositive")
+			  && !(rm.getFieldArrayNames()[index] == "gene_Neuro_Morphogenetic_Protein_Flight"))
+	  {//all of the above are determined by (1 - someAttribute)
+		  double m = rm.getFieldArrayValues()[index];		  
+		  double k = mutatationA(m);
+		  setGene(index, k, kidGene);
+	  }//end if-then
+  }//end for loop
+  
+  child.setGenes(kidGene);
+}
 
-private boolean pickParent(Parameter dad, Parameter mom)
-{//Randomly chooses a parent, TRUE = Mom, FALSE = Dad
-	if (dad == null) {
-	        return true; //dad does not have this parameter, so pick mom
-	} else if (mom == null)
-	{
-	    return false; //mom does not have this parameter, so pick dad
-	}//end if-else
-	else
-	{
-	    int choice = rng.nextInt() % 2;
-	    if (choice == 0) return false; //picked dad
-	    else return true; //picked mom
-	}//end if-else-else
-}//end pickParent
 
+private void setGene(int index,double val, GeneSequence kGene)throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException
+{
+	Field[] geneSequenceFieldArray = kGene.getClass().getDeclaredFields();
+	Field f = geneSequenceFieldArray[index];
+	f.setAccessible(true);			
+	f.set(kGene, val);
+	f.setAccessible(false);
+}
+
+private double mutatationS(double dParam, double mParam){
+	//establish whether mutation will occur: radical, drift, none
+	//pick a parent to take a gene from
+	//give that gene, or drift from that gene
+
+		double roll = WorldState.rng0[4].rDouble();
+		double temp = 0;
+		if (roll < WorldState.radicalMutation) {
+			//radical mutation
+			temp = mutateRandom();
+			return temp;
+		} else if (roll <= (WorldState.getDrift() + mutationFactor)) {
+			//genetic drift
+			boolean pickMom = pickParent();
+			roll = WorldState.rng0[5].rDouble();
+			roll = (roll *2) - 1;
+			if (pickMom) temp = mParam;
+			else temp = dParam;
+			temp = mutateDrift(roll, temp);
+			return temp;
+		} else
+		{//no mutation 
+			boolean pickMom = pickParent();
+			if (pickMom) return mParam; 
+			else return dParam;
+		}//end if-else-else
+}
+
+private double mutatationA(double mParam){
+	//establish whether mutation will occur: radical, drift, none
+	//pick a parent to take a gene from
+	//give that gene, or drift from that gene
+
+		double roll = WorldState.rng0[4].rDouble();
+		double temp = 0;
+		
+		if (roll <= WorldState.radicalMutation) {
+			//radical mutation
+			temp = mutateRandom();
+			return temp;
+		} else if (roll <= (WorldState.getDrift() + mutationFactor)) {
+			//genetic drift
+			roll = WorldState.rng0[5].rDouble();
+			roll = (roll *2) - 1;
+			temp = mutateDrift(roll, mParam);
+			return temp;
+		} else
+		{//no mutation 
+			return mParam; 		
+		}//end if-else-else
+}
+
+private boolean pickParent()
+{
+    int choice = WorldState.rng0[3].rInt(2);
+    if (choice == 0) return false; //picked dad
+    else return true; //picked mom
+}
+
+private double mutateDrift(double roll, double startVal){
+	//allows for mutation within a small range bounded by +- (driftFactor + mutationFactor)
+	double finalVal = startVal + (roll * (startVal * (mutationFactor + WorldState.driftAmount)));
+	return finalVal;
+}
+
+private double mutateRandom(){
+	double roll = WorldState.rng0[5].rDouble();;
+	return roll;
+}
+
+public Organism getChild() {
+	return child;
+}
 
 }//end class
 

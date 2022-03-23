@@ -1,11 +1,18 @@
-import java.awt.Color;
+/* GridUniverse.java
+ * CPSC 565 W2016: Project
+ * Emil Emilov-Dulguerov and Jason Schneider
+ * This class contains methods to draw and redraw our world window, and it's UI components
+ * 
+ */import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
+
 
 //first there was light, then there was a grid
 @SuppressWarnings("serial")
@@ -34,23 +41,28 @@ public class GridUniverse extends JPanel{
 	private Color borderColor = Color.blue;
 	private Color resColor = Color.yellow;
 	
+	//BUTTONS
+	private JButton startButton;
+	private JButton exitButton;
+	private JButton resetButton;
+	private JButton pauseButton;
+	
 	//Other Stuff
 	private Patch [][] patchGrid;
-	private Random seeder;
+	
 	
 	public GridUniverse(){
 		fillCells = new ArrayList<>();
 	}
 	
-	public GridUniverse(int x, int y, Random planter){
+	public GridUniverse(int x, int y){
 		fillCells = new ArrayList<>();
-		seeder = planter;
 		patchGrid = new Patch [x][y];
 		
 		for (int ix = 0; ix < x; ix++)
 		{
 			for (int jy = 0; jy < y; jy++){
-				double tSeed = seeder.nextDouble();
+				double tSeed = WorldState.rng0[0].rDouble();
 				double cumulative = 0;
 				int seed = 0;
 				
@@ -67,10 +79,11 @@ public class GridUniverse extends JPanel{
 				}
 				
 				patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
-				patchGrid[ix][jy].spawnResource(seeder.nextDouble());
+				patchGrid[ix][jy].spawnResource(WorldState.rng0[2].rDouble());
 				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
 			}
 		}
+		WorldState.addLogEvent("The World has been created.");
 	}
 		
 	//speaks for itself
@@ -86,7 +99,7 @@ public class GridUniverse extends JPanel{
 		//empty(g);
 		//fill(g);
 		testUpdate(g);
-		g.setColor(gridColor); //blue grid lines
+/*		g.setColor(gridColor); //blue grid lines
 		
 		//grid lines - horizontal
 		for(int i = length; i <= gridLength; i += length){
@@ -96,14 +109,14 @@ public class GridUniverse extends JPanel{
 		//grid lines - vertical
 		for(int i = width; i <= gridWidth; i += width){
 			g.drawLine(width, i, gridLength + width, i);
-		}		
+		}*/		
 		
 		g.setColor(borderColor); //blue grid lines
 		g.drawRect(length, width, gridLength, gridWidth); //50 x 80 grid
 	}
 	
 	//don't be jelly that I'm the chosen cell filler, bro
-	public void fillCell(int x, int y, Organism o){
+	public void fillCell(int x, int y, OrganismGFX o){
 		//if (o != null) setFormerPosition(o.formerCellX, o.formerCellY); //jason
 			fillCells.add(new Point(x, y));
 		//display();
@@ -209,5 +222,36 @@ public class GridUniverse extends JPanel{
 		}
 		}
 	}
-		
+
+	public JButton getStartButton() {
+		return startButton;
+	}
+
+	public void setStartButton(JButton startButton) {
+		this.startButton = startButton;
+	}
+
+	public JButton getExitButton() {
+		return exitButton;
+	}
+
+	public void setExitButton(JButton exitButton) {
+		this.exitButton = exitButton;
+	}
+
+	public JButton getResetButton() {
+		return resetButton;
+	}
+
+	public void setResetButton(JButton resetButton) {
+		this.resetButton = resetButton;
+	}
+
+	public JButton getPauseButton() {
+		return pauseButton;
+	}
+
+	public void setPauseButton(JButton pauseButton) {
+		this.pauseButton = pauseButton;
+	}
 }

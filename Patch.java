@@ -1,4 +1,8 @@
+
+
 import java.awt.Color;
+import java.util.ArrayList;
+
 
 
 public class Patch {
@@ -6,8 +10,6 @@ public class Patch {
 	//patch origin (top-left corner coordinates)
 	private int worldX;
 	private int worldY;
-	
-
 
 	private int type; //See WorldState for possible values and their meaning
 	private Color color = Color.black;
@@ -15,7 +17,7 @@ public class Patch {
 	private boolean hasResource = false;
 	private boolean hasEntity = false;
 	
-	private Entity theE = null;
+	private ArrayList<Organism> theE = null;
 	private Resource theR = null;
 	
 	public Patch(int wx, int wy, int tType)
@@ -26,6 +28,7 @@ public class Patch {
 		color = WorldState.terrainColor[type];
 		worldX = wx;
 		worldY = wy;
+		theE = new ArrayList<Organism>();
 	}
 	
 	public void spawnResource(double roll)
@@ -90,25 +93,23 @@ public class Patch {
 		return hasEntity;
 	}
 
-	public Entity getTheE() {
-		return theE;
+	public Organism getTheE() {
+		return theE.get(0);
+	}
+	
+	public Organism getTheE(int index){
+		return theE.get(index);
 	}
 
-	public void setTheE(Entity theE) {
-		if ((hasResource == false) && ((hasEntity == false) || (theE == null))) this.theE = theE; //"remove hasResource = false" to remove entity-resource collision
+	public void setTheE(Organism theE) {
+		this.theE.add(theE); //"remove hasResource = false" to remove entity-resource collision
 		if (this.theE != null) hasEntity = true;
 		else hasEntity = false;
 	}
 	
-	public boolean setHasE(boolean hasE)
+	public void setHasE(boolean hasE)
 	{
-/*		if ((hasEntity == false) && (hasE)) {
-			hasEntity = hasE;
-			return true;}
-		else if (hasE == false) hasEntity = hasE;
-		return false;*/
 		hasEntity = hasE;
-		return hasE;
 	}
 
 	public Resource getTheR() {
@@ -129,6 +130,12 @@ public class Patch {
 	public Color getColor()
 	{
 		return color;
+	}
+
+	public void removeE(Organism e)
+	{
+		theE.remove(e);
+		hasEntity = false;
 	}
 	
 }

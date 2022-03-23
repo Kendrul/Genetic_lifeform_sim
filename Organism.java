@@ -1,196 +1,279 @@
+import java.awt.AWTException;
 import java.awt.Point;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Random;
 
-//live, my little one; live and let die
-public class Organism{
+import old.Parameter;
 
-	GridUniverse grid;
-	int birthPlaceX; //the mother/fatherland in x, y 
-	int birthPlaceY; 
-	int locationX; //current location in x, y
-	int locationY;
-	int formerCellX; //used to erase organism's former location (x,y) block color
-	int formerCellY;
-	int direction; //8 possible directions (think 12, 1.5, 3, 4.5, 6, 7.5, 9, 10.5 on a clock)
-	boolean canMove = true; //will be used in the future to determine organism's capacity to move (true by default)
-	Random rand = new Random();
+public class Organism {
 	
-	//boundary constants
-	private int patchXnum = WorldState.pLnum;
-	private int patchYnum = WorldState.pWnum;
+	private String name;
+	private int idNumber;
+	private int hp;
 	
-	//let the divine spirit be your divine spark
-	Organism(GridUniverse grid, int x, int y){
-		this.grid = grid;
-		this.birthPlaceX = x;
-		this.birthPlaceY = y; 
-		genesis(); 
-		//locomotion();
-	}
-	  
-	//from the earth we come, to the heavens we go
-	public void genesis(){
-			
-		grid.fillCell(birthPlaceX, birthPlaceY, null); 
-		locationX = birthPlaceX; 
-		locationY = birthPlaceY; 	
-	}
+	//---------------------------------------------------------
+	//COMBAT VALUES, determined from Kinetics
+	private int maxHp; //amount of harm an entity can take before dying
+	private int attack; //amount of harm inflicted per attack
+	private int speed; //determines which entity acts first, and the ability to flee (speedOfLocomotion)
+	private double crit; //chance to do double damage to another entity upon attack
+	private double dodge; //chance to avoid taking damage from an action
+	private double flightTendency; //chance to decide to run away (1 - fightResponse)
+	//------------------------------------------------------------------
 	
-	//dance my child, dance
-	public void locomotion(){
-		while(canMove) {
-		
-			//this info will be used to erase former position block on the grid
-			//grid.setFormerPosition(locationX, locationY);
-			setFormerPosition(locationX, locationY);
-				
-			
-			tryAnotherDirection: //a convenient goto label
-			while(true){
-				direction = random();
-				
-				//I decided to model locomotion using the 8 surrounding blocks/patches 
-				switch(direction){
-				case 1: locationY = locationY - 1; //1 is up toward 12 o'clock
-					break;
-				case 2: locationX = locationX + 1; locationY = locationY - 1; //2 is up-right toward 1.5 o'clock
-					break;
-				case 3: locationX = locationX + 1; //2 is right toward 3 o'clock
-					break;
-				case 4: locationX = locationX + 1; locationY = locationY + 1; //4 is down-right toward 4.5 o'clock
-					break;
-				case 5: locationY = locationY + 1; //5 is down toward 6 o'clock
-					break;
-				case 6: locationX = locationX - 1; locationY = locationY + 1; //6 is down-left toward 7.5 o'clock
-					break;
-				case 7: locationX = locationX - 1; //7 is left toward 9 o'clock
-					break;
-				case 8: locationX = locationX - 1; locationY = locationY - 1; //2 is up-left toward 10.5 o'clock
-					break;
-				}
-				
-				//created some boundary rules
-				if (locationX < 0 || locationX > patchXnum - 1 || locationY < 0 || locationY > patchYnum - 1){
-					
-					//undoing the operation from the previous switch statement (neutralizing worm hole phenomena at boundary layer)
-					switch(direction) {
-					case 1: locationY = locationY + 1; //1 is up toward 12 o'clock
-						break;
-					case 2: locationX = locationX - 1; locationY = locationY + 1; //2 is up-right toward 1.5 o'clock
-						break;
-					case 3: locationX = locationX - 1; //2 is right toward 3 o'clock
-						break;
-					case 4: locationX = locationX - 1; locationY = locationY - 1; //4 is down-right toward 4.5 o'clock
-						break;
-					case 5: locationY = locationY - 1; //5 is down toward 6 o'clock
-						break;
-					case 6: locationX = locationX + 1; locationY = locationY - 1; //6 is down-left toward 7.5 o'clock
-						break;
-					case 7: locationX = locationX + 1; //7 is left toward 9 o'clock
-						break;
-					case 8: locationX = locationX + 1; locationY = locationY + 1; //2 is up-left toward 10.5 o'clock
-						break;
-					}
-					continue tryAnotherDirection;
-				}
-				else { break; }
-			}
-			
-			grid.fillCell(locationX, locationY, this); 
-			grid.repaint();
-			  try{
-	               Thread.sleep(33); //slowed the loop to approximately 30 fps
-	                  }catch(Exception e) {}
-		}
-	}
+	private int resourceCarryAmount;
+	private ArrayList<Resource> inventory;
 	
+	private double woundPenalty;
+
+	private boolean isDebug = WorldState.isDebug;
+	
+	//other class links
+	private OrganismGFX theOrg;
+	private BattleState fighter;
+	private GeneSequence genes;
+	private GeneToPhenotype pheno;
+	private PhenotypeToKinetics kinetics;
+	
+	//TBI
 	/**
-	 * Used to move an entity one time
-	 */ 
-	public void move(){	
-	if(canMove) {
+	 * 
+	 * @param whoAreYou
+	 * @param health
+	 * @param dmg
+	 * @param theSpeed
+	 * @param criticalStrike
+	 * @param avoid
+	 * @param flightRisk
+	 */
+	public Organism(String whoAreYou, int health, int dmg, int theSpeed, double criticalStrike, double avoid, double flightRisk)
+	{
+		name = whoAreYou;
+		maxHp = health;
+		hp = health;
+		attack = dmg;
+		speed = theSpeed;
+		crit = criticalStrike;
+		dodge = avoid;
+		flightTendency = flightRisk;
+		woundPenalty = 0;
+		idNumber = WorldState.getID();
+		inventory = new ArrayList<Resource>();
+	}
+	
+	public Organism()
+	{
+		woundPenalty = 0;
+		idNumber = WorldState.getID();
+		name = WorldState.randName(WorldState.rng1[3].rInt(WorldState.names.length));
+		fighter = new BattleState(this);
+		inventory = new ArrayList<Resource>();
+	}
+	
+	public OrganismGFX getTheOrg() {
+		return theOrg;
+	}
+
+	public void setTheOrg(OrganismGFX theOrg) {
+		this.theOrg = theOrg;
+		theOrg.setOwner(this);
+	}
+	public ArrayList<Parameter> getParameterList()
+	{
+		return null;
+	}
+
+	public void debugSet(boolean setDebugMode)
+	{
+		isDebug = setDebugMode;
+	}
+	
+	public int battleSpeed()
+	{
+		return (int) (speed * (woundPenalty * 2));
+	}
+	
+	//GETTERS AND SETTERS
+	public String getName() {
+		return name + idNumber;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getHp() {
+		return hp;
+	}
+
+	public void setHp(int hp) {
+		this.hp = hp;
+	}
+
+	public int getAttack() {
+		return attack;
+	}
+
+	public void setAttack(int attack) {
+		this.attack = attack;
+	}
+
+	public int getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(int speed) {
+		this.speed = speed;
+	}
+
+	public double getCrit() {
+		return crit;
+	}
+
+	public void setCrit(double crit) {
+		this.crit = crit;
+	}
+
+	public double getDodge() {
+		return dodge;
+	}
+
+	public void setDodge(double dodge) {
+		this.dodge = dodge;
+	}
+
+	public double getWoundPenalty() {
+		return woundPenalty;
+	}
+
+	public void setWoundPenalty(double woundPenalty) {
+		this.woundPenalty = woundPenalty;
+	}
+
+	public double getFlightTendency() {
+		return flightTendency;
+	}
+
+	public void setFlightTendency(double flightTendency) {
+		this.flightTendency = flightTendency;
+	}
+	
+	public int getMaxHp()
+	{
+		return maxHp;
+	}
+	
+	public void move(int turn) throws AWTException
+	{
+		theOrg.move(turn);
+	}
+	
+	public Point getPoint()
+	{
+		return theOrg.getPoint();
+	}
+
+	public BattleState getFighter() {
+		return fighter;
+	}
+
+	public void setFighter(BattleState fighter) {
+		this.fighter = fighter;
+	}
+
+	public GeneSequence getGenes() {
+		return genes;
+	}
+
+	public void setGenes(GeneSequence genes)throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
+		this.genes = genes;
 		
-		//this info will be used to erase former position block on the grid
-		//grid.setFormerPosition(locationX, locationY);
-		setFormerPosition(locationX, locationY);
-			
+		//SET PHENO
+		reflectPack r = EventPack.geneFields(genes);
+		genes.update();
+		pheno = new GeneToPhenotype(r.getFieldArrayValues(), r.getFieldArrayNames());
 		
-		tryAnotherDirection: //a convenient goto label
-		while(true){
-			direction = random();
-			
-			//I decided to model locomotion using the 8 surrounding blocks/patches 
-			switch(direction){
-			case 1: locationY = locationY - 1; //1 is up toward 12 o'clock
-				break;
-			case 2: locationX = locationX + 1; locationY = locationY - 1; //2 is up-right toward 1.5 o'clock
-				break;
-			case 3: locationX = locationX + 1; //2 is right toward 3 o'clock
-				break;
-			case 4: locationX = locationX + 1; locationY = locationY + 1; //4 is down-right toward 4.5 o'clock
-				break;
-			case 5: locationY = locationY + 1; //5 is down toward 6 o'clock
-				break;
-			case 6: locationX = locationX - 1; locationY = locationY + 1; //6 is down-left toward 7.5 o'clock
-				break;
-			case 7: locationX = locationX - 1; //7 is left toward 9 o'clock
-				break;
-			case 8: locationX = locationX - 1; locationY = locationY - 1; //2 is up-left toward 10.5 o'clock
+		//SET KINETICS
+		r = EventPack.phenoFields(pheno);
+		kinetics = new PhenotypeToKinetics(r.getFieldArrayValues(), r.getFieldArrayNames());
+		kinetics = pheno.phenoArrayGeneration();
+		WorldState.addName(getName());
+		WorldState.addGenome(genes);
+		
+		updateStats();
+	}
+
+	public void updateStats() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException{
+		//uses kinetics and phenotype to update the statistics of the organism
+		reflectPack r = EventPack.kinFields(kinetics);
+		
+	}
+	
+	public int getIdNumber() {
+		return idNumber;
+	}
+
+	public GeneToPhenotype getPheno() {
+		return pheno;
+	}
+
+	public PhenotypeToKinetics getKinetics() {
+		return kinetics;
+	}
+	
+	public boolean findResource(Resource r){
+		if(inventory.contains(r)) return true;
+		else return false;
+	}
+	
+	public void addResource(Resource r, int amount){
+		if ((amount + resourceCarryAmount) <= kinetics.getResourceCarryingCapacity())
+		{
+			if (!inventory.contains(r)) inventory.add(r);
+			else inventory.get(inventory.indexOf(r)).addAmount(amount);
+			resourceCarryAmount += amount;
+		}
+	}
+	
+	public Resource dropResource(Resource r, int amount)
+	{
+		Resource res = inventory.get(inventory.indexOf(r));
+		
+		if (res.getAmount() <= amount)
+		{
+			resourceCarryAmount -= res.getAmount();
+			inventory.remove(r);
+		} else
+		{
+			resourceCarryAmount -= amount;
+			res.removeAmount(amount);
+			res = new Resource(res, amount);
+		}	
+		
+		return res;
+	}
+	
+	public void consumeFood(int amount){
+		
+		for(int i = 0; i < inventory.size(); i++){
+			if(inventory.get(i).getResourceType() == WorldState.resourceType[0])
+			{
+				Resource res = inventory.get(i);
+				if (res.getAmount() <= amount)
+				{
+					resourceCarryAmount -= res.getAmount();
+					inventory.remove(i);
+				} else
+				{
+					resourceCarryAmount -= amount;
+					res.removeAmount(amount);
+				}	
+				//TODO what benefit does food provide?
 				break;
 			}
-			
-			//created some boundary rules
-			if (locationX < 0 || locationX > patchXnum - 1 || locationY < 0 || locationY > patchYnum - 1){
-				
-				//undoing the operation from the previous switch statement (neutralizing worm hole phenomena at boundary layer)
-				switch(direction) {
-				case 1: locationY = locationY + 1; //1 is up toward 12 o'clock
-					break;
-				case 2: locationX = locationX - 1; locationY = locationY + 1; //2 is up-right toward 1.5 o'clock
-					break;
-				case 3: locationX = locationX - 1; //2 is right toward 3 o'clock
-					break;
-				case 4: locationX = locationX - 1; locationY = locationY - 1; //4 is down-right toward 4.5 o'clock
-					break;
-				case 5: locationY = locationY - 1; //5 is down toward 6 o'clock
-					break;
-				case 6: locationX = locationX + 1; locationY = locationY - 1; //6 is down-left toward 7.5 o'clock
-					break;
-				case 7: locationX = locationX + 1; //7 is left toward 9 o'clock
-					break;
-				case 8: locationX = locationX + 1; locationY = locationY + 1; //2 is up-left toward 10.5 o'clock
-					break;
-				}
-				continue tryAnotherDirection;
-			}
-			else {
-				break;
-				}
 		}
 		
-		grid.getPatchGrid()[locationX][locationY].setHasE(true);
-		grid.getPatchGrid()[formerCellX][formerCellY].setHasE(false);
-		
-		grid.fillCell(locationX, locationY, this);
-		//grid.repaint();
 	}
-}
-	
-	public void setFormerPosition(int x, int y){
-		formerCellX = x;
-		formerCellY = y;
-	}
-	
-	//Einstein would be upset if he knew how random things really are...
-	//Sorry Alberto, God does play with dice... Or does he? 
-	//What if things are always random, but God never plays with dice? 
-	//Whoa, mind blown dude. <-- says Alberto Einstein, the Rabbi of Physics  
-	public int random(){ 
-		int value = rand.nextInt(8) + 1; //for randomly generated values from 1 to 8 
-		return value; 
-	}
-	
-	public Point getPoint(){
-		return new Point(locationX, locationY);
-	}
+
 }
