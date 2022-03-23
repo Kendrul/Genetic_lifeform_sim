@@ -11,19 +11,21 @@ public class Organism implements Comparable{
 	private String name;
 	private int idNumber;
 	private int hp;
+	private OrgInfo info;
 	
 	private int age = 0; //in simulation turns
 	private int generation = 0;
-	private int energy = 100;
+	private int energy = WorldState.baseEnergy;
 	private int lowEnergyThreshold = WorldState.lowEnergyThreshold;
 	private int highEnergyThreshold = WorldState.highEnergyThreshold;
 	private int regenThreshold = WorldState.regenThreshold;
 	private int brainEnergyConsumption;
-	private int actionPoint = 2;
-	private int goal; //0 food, 1 safety, 2 repro, 3 explore/none
+	private int actionPoint;
+	private int goal; //0 food, 1 safety, 2 repro, 3 explore/none, 4 share
 	private Patch target;
-	private boolean aSexual = true;
+	private boolean aSexual = false;
 	private int rFitness = 0;
+	private int sitCounter = 0;
 	
 	//---------------------------------------------------------
 	//COMBAT VALUES, determined from Kinetics
@@ -40,9 +42,8 @@ public class Organism implements Comparable{
 	private ArrayList<Resource> inventory;
 	
 	//behaviour modifiers
-	private boolean goodMood;
-	private double moodChance;
 	private double hostility;
+	private int paranoiaLevel;
 	
 	private double woundPenalty;
 	private double fatiguePenalty;
@@ -84,7 +85,7 @@ public class Organism implements Comparable{
 		inventory = new ArrayList<Resource>();
 		pairs = new ArrayList<Coupling>();
 		generation = Starter.getGeneration();
-		WorldState.addGenerationVault(generation);
+		info = new OrgInfo(idNumber, getName(), generation, Starter.getTurn());
 	}
 	
 	public Organism()
@@ -97,7 +98,7 @@ public class Organism implements Comparable{
 		hp = maxHp;
 		generation = Starter.getGeneration();
 		pairs = new ArrayList<Coupling>();
-		WorldState.addGenerationVault(generation);
+		info = new OrgInfo(idNumber, getName(), generation, Starter.getTurn());
 	}
 	
 	public OrganismGFX getTheOrg() {
@@ -130,6 +131,7 @@ public class Organism implements Comparable{
 
 	public void setName(String name) {
 		this.name = name;
+		info.name = getName();
 	}
 
 	public int getHp() {
@@ -173,6 +175,7 @@ public class Organism implements Comparable{
 	public void setGeneration(int g)
 	{
 		generation = g;
+		info.generation = Integer.toString(g);
 	}
 	
 	public int getGeneration()
@@ -216,18 +219,32 @@ public class Organism implements Comparable{
 	public void resetAp()
 	{
 		actionPoint = ap;
+		
+		if (kinetics.getSpeedOfLocomotion() > 0.75) actionPoint += 3;
+		else if (kinetics.getSpeedOfLocomotion() > 0.5) actionPoint += 2;
+		else if (kinetics.getSpeedOfLocomotion() > 0.25) actionPoint += 1;
 	}
 	
 	public void action(int turn) throws AWTException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException
 	{//This Organism's turn to take an action, updates all attributes for over time (age, energy, regeneration)
 		//check health here
-		moodSet();
+		//TODO placeMarker for easy finding
+		//moodSet();
 		age++;
 		changeEnergyLevel(-brainEnergyConsumption);
 		regeneration();
+		int action;
 		if (hp <= 0) return; //dead
-		int action = decideTurn();
+		if ((sitCounter > 0) && (goal != 4))
+		{//currently acting out a different event, do nothing
+			sitCounter--;
+			return;
+		} else if (goal == 4){
+			action = helpMoveOptions(theOrg.getSight().mobCount());
+		}else{
+			action = decideTurn();
 		if (target == null) action = -2;//something broke, move random
+		}
 		switch (action) {
 		case -1 : 
 			break; //entity is too weak/injured to take any further action
@@ -235,22 +252,36 @@ public class Organism implements Comparable{
 				if(theOrg.getPatch().equals(target)) reap(); //eat food here
 				break;
 		case 2: theOrg.move(target);
-				//share Request
+				//ask for food
+				if (target.findOtherOrg(this).hasFood()) {
+					TradeRequest tr= null;
+					tr = new TradeRequest(target.findOtherOrg(this).getInventory().get(0), this, calcCollect());
+					EventPack.askShare(tr, this, target.findOtherOrg(this));
+				}
 				break;
-		case 3: theOrg.move(target);
-				if(theOrg.getPatch().equals(target)) askTrade(); //tradeRequest
+		case 3: //give food (was trade which was not implemented)
+				theOrg.move(target);
+				EventPack.shareResource(this, target.findOtherOrg(this), inventory.get(0), (int) Math.floor(inventory.get(0).getAmount() * WorldState.rng3[1].rDouble()), false);
+				//findCouple.(theOrg.getPatch().findOtherOrg(this)).
 				break;
 		case 4: theOrg.move(target);
 				//fight
+				if (goal == 0) EventPack.battleWrapper(this, target.findOtherOrg(this), true, true);
+				else EventPack.battleWrapper(this, target.findOtherOrg(this), true, false);
 				break;
 		case 5:  theOrg.move(target);
 				harvest(); //pick up food here
 				break;
 		case 6: theOrg.hunt();
 				break;
+		case 7 : 
+			actionPoint =0; //nowhere to go
+			break; 
 		case 8: theOrg.move(target);
 				EventPack.askMate(this, theOrg.getPatch().getTheE());
 				break;
+		case 9: theOrg.move(target); //safety move
+			break;
 		case 0: //randomMove
 		default :
 			theOrg.setHunt(false); //not hunting for anything
@@ -259,12 +290,12 @@ public class Organism implements Comparable{
 		}
 	}
 	
-	private void moodSet()
+	/*private void moodSet()
 	{
 		double roll = WorldState.rng1[4].rDouble();
 		if (roll >= moodChance) goodMood = false;
 		else goodMood = true;
-	}
+	}*/
 	
 	public void regeneration(){
 		if (woundPenalty > 0.75){
@@ -276,7 +307,7 @@ public class Organism implements Comparable{
 				if (hp < 0) {
 					WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has died due to it's poor health and/or wounds.");
 					Starter.getStats().incWoundDeath(1);
-					Starter.entityDeath(this);
+					Starter.entityDeath(this, "Wounds");
 				}
 				return;
 			}
@@ -293,7 +324,7 @@ public class Organism implements Comparable{
 			if (hp < 0) {
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has starved to death.");
 				Starter.getStats().incStarveDeath(1);
-				Starter.entityDeath(this);
+				Starter.entityDeath(this, "Starvation");
 			}
 		}
 	}
@@ -367,9 +398,6 @@ public class Organism implements Comparable{
 			if(rp.getFieldArrayNames()[i].contains("colonial")){
 				relational = rp.getFieldArrayValues()[i];
 			} 			
-			if(rp.getFieldArrayNames()[i].contains("mood")){
-				moodChance = rp.getFieldArrayValues()[i];
-			} 
 			if(rp.getFieldArrayNames()[i].contains("hostility")){
 				hostility = rp.getFieldArrayValues()[i];
 			} 
@@ -398,7 +426,7 @@ public class Organism implements Comparable{
 			} 
 			
 		}
-		
+		resetAp();
 	}
 	
 	public int getIdNumber() {
@@ -550,7 +578,6 @@ public class Organism implements Comparable{
 					res.removeAmount(amount);
 					justEat(inventory.get(i), amount);
 				}	
-				//TODO what benefit does food provide?
 				break;
 			}
 		}	
@@ -597,7 +624,9 @@ public class Organism implements Comparable{
 		int safetyPriority = WorldState.NONE;
 		int reproPriority = WorldState.NONE;
 		int explorePriority = WorldState.LOW;
-		int p = paranoia();
+		paranoia();
+		int p = paranoiaLevel;
+		
 		
 		if (energy == 0) foodPriority = WorldState.CRITICAL; //FIND FOOD NO MATTER WHAT
 		else if (energy < lowEnergyThreshold) foodPriority = WorldState.HIGH; //FIND FOOD ASAP
@@ -605,34 +634,35 @@ public class Organism implements Comparable{
 		else if ((energy + potentialEnergy()) < highEnergyThreshold) foodPriority = WorldState.LOW;
 		
 		if (woundPenalty > 0.75) safetyPriority =WorldState.CRITICAL;
-		else if ((woundPenalty > 0.5) || ((p >2)  && (woundPenalty > 0))) safetyPriority =WorldState.HIGH; //injured and possibly paranoid
-		else if (p >= 2) safetyPriority =WorldState.MEDIUM; //just paranoid
-		else if ((woundPenalty > 0) || p == 1) safetyPriority =WorldState.LOW; //slightly wounded or slightly paranoid
+		else if ((woundPenalty > 0.5) || ((p >3)  && (woundPenalty > 0))) safetyPriority =WorldState.HIGH; //injured and possibly paranoid
+		else if (p >= 3) safetyPriority =WorldState.MEDIUM; //just paranoid
+		else if ((woundPenalty > 0) || p == 2) safetyPriority =WorldState.LOW; //slightly wounded or slightly paranoid
 		
-		if (age >= WorldState.reproductiveMaturityAge * 3) reproPriority = WorldState.CRITICAL; //TODO TEMP
+		if (age >= WorldState.reproductiveMaturityAge * 3) reproPriority = WorldState.CRITICAL; 
 		if ((energy > (highEnergyThreshold / 4)) && (woundPenalty < 0.25) && (age > WorldState.reproductiveMaturityAge)) reproPriority = WorldState.LOW;
 		
 		///double roll = WorldState.rng3[0].rDouble(); // for sleep check
 		
-		int pChoice = decidePriority(new int[]{foodPriority, safetyPriority, reproPriority, explorePriority} , p);
+		int pChoice = decidePriority(new int[]{foodPriority, safetyPriority, reproPriority, explorePriority});
 		int dChoice;
 		switch (pChoice) {
 		case 0: dChoice = decideFood(foodPriority); //find food
 			break;
-		case 1: dChoice = decideSafety(safetyPriority); //seek safety
+		case 1: dChoice = decideSafety(); //seek safety
 			break;
 		case 2: //dChoice = decideRepro(); //make some babies!
 			//break;
 		case 3: dChoice = decideExplore(); //to seek out new life and new civilizations
 			break;
 		case 4: return 4; //sleep,
+		case 5: return helpMoveOptions(theOrg.getSight().mobCount());
 		default: dChoice = decideExplore(); //to boldly go where no man has gone before
 			break;	
 		}
 		return dChoice;
 	}
 	
-	private int decidePriority(int [] p, int paranoid)
+	private int decidePriority(int [] p)
 	{//PRIORITY: FOOD 0, SAFETY 1, REPRODUCTION 2, EXPLORE 3
 		//first level
 		if (p[3] == WorldState.CRITICAL) return 2; //forced to seek reproduction?
@@ -645,9 +675,9 @@ public class Organism implements Comparable{
 			//pick one
 			double roll = WorldState.rng3[0].rDouble();
 			//paranoia takes into account coupling, health, number of nearby organisms, flightTendency, hostility and fighting Effectiveness
-			double threshold = WorldState.baseSafety + (paranoid / (100)); //base value + paranoia level + hostility
-			if (goodMood) threshold -= WorldState.baseSafety / 2; //good mood, less vigilant
-			else threshold += WorldState.baseSafety / 2; //bad mood, more vigilant
+			double threshold = WorldState.baseSafety + (paranoiaLevel / (100)); //base value + paranoia level + hostility
+			//if (goodMood) threshold -= WorldState.baseSafety / 2; //good mood, less vigilant
+			//else threshold += WorldState.baseSafety / 2; //bad mood, more vigilant
 			if (potentialEnergy() > lowEnergyThreshold * 2) threshold += lowEnergyThreshold / 100; //has food stores, not so dire
 			if (roll > threshold) return 0; //focus on food
 			else return 1; //safety focus
@@ -662,7 +692,7 @@ public class Organism implements Comparable{
 		//low prior food and safety have same prior has repro (if allowed) and explore
 		double roll = WorldState.rng3[0].rDouble();
 		if (roll < 0.5) return goal; //stick with current goal
-		double threshold = 0.5 + (WorldState.baseSafety + (paranoid / (100)))/2;
+		double threshold = 0.5 + (WorldState.baseSafety + (paranoiaLevel / (100)))/2;
 		if (roll < threshold){
 			goal = 1;
 			return 1; //focus on safety
@@ -682,7 +712,8 @@ public class Organism implements Comparable{
 			}
 		}
 		//default action
-		goal = 3;
+		if (goal != 4) goal = 3;
+		else return 5;//share
 		return 3; //explore!
 	}
 	
@@ -706,7 +737,7 @@ public class Organism implements Comparable{
 		}
 			
 		//needs to locate food	
-			if (theOrg.getPatch().hasFood())
+			if (theOrg.getPatch().hasFood() && theOrg.getPatch().getTheR().getAmount() > 0 && (resourceCarryAmount < (kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant)))
 			{//food located here, consume some
 				if ((desperationLevel == WorldState.CRITICAL) || (desperationLevel == WorldState.HIGH)) reap();
 				else if (resourceCarryAmount < (kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant)) harvest();
@@ -726,68 +757,228 @@ public class Organism implements Comparable{
 				}//check for coupled source? 
 				else {//check for nearby organism with food
 					
-					/*spot = theOrg.getSight().findFoodOrg();
+					spot = theOrg.getSight().findFoodOrg();
 					if (spot != null)
 					{//found a spot
 						target = spot; //1 means move to target location and reap
-						int choice = chooseAction(desperationLevel, spot.getTheE());
+						int choice = chooseActionForFood(spot.getTheE());
 						if (choice == EventPack.FightEvent) return 4;						
-						else if(choice == EventPack.ShareEvent) return 2;
-						else if(choice == EventPack.TradeEvent) return 3;
+						else return 2;
+						//else if(choice == EventPack.TradeEvent) return 3;
 					}//check for coupled source?
 					else
 					{
 						//no options remain?
-					}*/
+					}
 				}//end else check orgs
 			}//end else check patchs
-				
-				
-		
+
 		return 6; //wander it is
 	}
 	
-	public int chooseAction(int desperationLevel, Organism target){
+	public int chooseActionForFood(Organism target){
 		//determines whether the organism should first try to ask for trade, share, or fight for food
-		double roll = WorldState.rng3[2].rDouble();
-		double threshold = (desperationLevel) + (hostility - flightTendency) - getBattlePenalty() + (kinetics.getFightingEffectiveness() - target.getKinetics().getFightingEffectiveness());
-		if (goodMood == false) threshold += 0.1;
+		int d = decideFight(target, false);
+		//if (goodMood == false) threshold += 0.1;
 		//threshold += spot for coupling, and similarity
-		if (roll < threshold) return EventPack.FightEvent;
-		if (inventory.size() > 0) return EventPack.TradeEvent;
+		if ((d == EventPack.FightEvent)) return EventPack.FightEvent;
 		else return EventPack.ShareEvent;
 	}
 
-	public int decideSafety(int desperationLevel) throws AWTException{
+	public int decideSafety() throws AWTException{
 	//ORGANISM HAS DECIDED TO FOCUS ON SAFETY
-	//If outnumbered or can't win --> run
+		//If outnumbered or can't win --> run
 	//If has numbers or stronger --> fight (maybe?)
+		//boolean willFight = decideFight(false);
 	//cornered -> fight
 		//if weaker vs neutral or slightly hostile, share food? (positive coupling)
-		return 6;//TODO
+		
+		//first check if current location is shared with another organism
+		goal = 1; //safety
+		Organism o = theOrg.getPatch().findOtherOrg(this);
+		int d = 0;
+		boolean run = false;
+	if (o != null){
+		//find relationship, if one exists
+		Coupling c = findCouple(o);
+		if (!c.isPositiveCouple()) d = decideFight(o, false); //enemy
+		
+		if (d == EventPack.FightEvent) EventPack.battleWrapper(this, o, true,false);
+		else 
+			{//decided not to fight, establish a coupling
+				establishPair(o);
+				run = true;
+			}
+	}
+	int p = personality();
+	//decided to run, or current location is empty (aside from THIS organism)
+	if (run == true || o == null){
+		//evaluate the safest escape route
+		d = safetyMoveOptions();
+		if (d == 7) 
+			{//nowhere to move
+				if(hasFood()){//share food to encourage good will?
+					o = theOrg.getPatch().findOtherOrg(this);
+					double roll = WorldState.rng3[2].rDouble();
+					Coupling c = findCouple(o);
+					if (findCouple(o).isPositiveCouple()) return 7;
+					else if (roll > c.getCoupleAmount()) {
+						EventPack.shareResource(this, o, inventory.get(0), (int) Math.floor(inventory.get(0).getAmount() * WorldState.rng3[1].rDouble()), false);
+						return 7; 
+					}
+				}else return 7;
+			}else if (d == 9) return 9; //safe spot to move to
+			else if (d ==2){//potential danger spot to move to
+				if(hasFood()){//share food to encourage good will?
+					o = theOrg.getPatch().findOtherOrg(this);
+					double roll = WorldState.rng3[2].rDouble();
+					Coupling c = findCouple(o);
+					if(c.getCoupleAmount() ==0) {
+						if (roll > 0.5) {
+							establishPair(o);
+							return 3;
+						}
+					}else if (findCouple(o).isPositiveCouple()) return 9;
+					else if (roll > c.getCoupleAmount()) return 2;
+				}else return 9;			
+			}
+	}
+
+		return 6;
+	}
+	
+	public int safetyMoveOptions(){
+		//assess's the surrounding area
+		ArrayList<Integer> count = theOrg.getSight().mobCount();
+		int num = 0;
+		
+		if (count.contains(0)) {
+			for(int i = 1; i < count.size(); i++)
+			{//count number of empty spots
+				if (count.get(i) == 0) num++;
+			}
+			
+			if (num == 1){
+				for(int i = 1; i < count.size(); i++)
+				{//count number of empty spots
+					if (count.get(i) == 0) {
+						num = i;
+						break;
+					}
+				}
+				target = theOrg.getSight().getTarget(num);
+				if (target == null) target = theOrg.getPatch();
+			} else if (num > 1) //multiple empty spots, find the least crowded
+			{
+				for(int i = 1; i < count.size(); i++)
+				{//count number of empty spots
+					if (count.get(i) == 0) {
+						int left, right, middle = 0;
+						if (i == 1) left = count.size()-1;
+						else left = i-1;
+						if (i == count.size()-1) right = 1;
+						else right = i+1;
+						if(count.get(left) != -1) middle += count.get(left);
+						if(count.get(right) != -1) middle += count.get(right);
+						count.set(i, middle);//creates a new value
+						//higher means more dangerous, means more neighbours to that spot
+					}
+				}
+				
+				for(int i = 1; i < count.size(); i++)
+				{// find the safest spot to move too
+					if (i == 1) num = 1;
+					else if (count.get(num) > count.get(i)) num = i;
+					else if (count.get(num) == count.get(i)){
+						//randomly choose a target
+						int roll = WorldState.rng3[3].rInt() % 2;
+						if (roll == 1) num = i;
+					}
+				}
+				target = theOrg.getSight().getTarget(num);
+				return 9;
+			} else if (count.contains(1)){//find spots nearby that are not full
+				Organism targetOrg = null;
+				double temp1 = -100.0, temp2;
+				Patch p = null;
+				ArrayList<Organism> pack = theOrg.getSight().pack();
+				
+				for (int i = 1; i < count.size(); i++)
+				{//go through each patch with non-max entities
+					if(count.get(i) == 1){
+						p = theOrg.getSight().getTarget(i);
+						
+						for (int j=0; j < pack.size(); j++)
+						{//examine nearby organisms, determine perceived strength compared to THIS or find FRIENDS
+							Organism o = pack.get(j);
+							if (!o.getTheOrg().getPatch().equals(theOrg.getSight().getTarget(i))) continue;
+							if (findCouple(o).isPositiveCouple()) {
+								//found a friend!
+								target = theOrg.getSight().getTarget(i);
+								return 9;
+							}
+							else if (o.getTheOrg().getPatch().equals(p)){
+								//assess a fighting capability difference
+								//find the perceived weakest neighbour
+								 temp2 = weaknessPerception(o);
+								 if (temp2 > temp1){
+									 temp1 = temp2;
+									 num = i;
+									 targetOrg = o;
+								 } else if(temp2 == temp1)
+								 {
+										int roll = WorldState.rng3[3].rInt() % 2;
+										if (roll == 1) {//random to decide which to choose
+											 temp1 = temp2;
+											 num = i;
+											 targetOrg = o;
+										}//end if
+								 }//end else-if
+							}//end if
+						}//end for loop (pack)
+					}//end if			
+				}//end for loop (count)
+				target = theOrg.getSight().getTarget(num);
+				num = decideFight(targetOrg, false);
+				if (num == EventPack.FightEvent) return 4;
+				else return 3;
+			}else {//fully surrounded
+				fighter.setCornered(true);
+				return 7;
+			}
+		}	
+		return 0;
 	}
 	
 	public int decideRepro() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException{
 		//ORGANISM HAS DECIDED TO REPRODUCE
-		//TODO: does this need desperationLevel?
 		if(actionPoint < 1) return -1;
 		if (aSexual) {
 			int roll = (WorldState.rng0[2].rInt() % WorldState.maxLitter) + 1;
 			double m = theOrg.getPatch().getMutation();
+			int e = energyTransfer(roll);
+			if (e == -1) return 6; //not enough energy
 			
 			for(int i = 0; i < roll; i++)
 			{
-				EventPack.reproductionA(this, m);
+				EventPack.reproductionA(this, m, e);
 			}
 			EventPack.reprodDeath(this);
 			return -1;
 		} else //choose a mate
 		{
-			//TODO REPRODUCTION: fitness function, similarity
+			Organism o = theOrg.getPatch().findOtherOrg(this);
+			
+			if(matingRequest(o)) {
+				//found a mate on current location
+				EventPack.askMate(this, o);
+				return 7;
+			}
+			
 			target = theOrg.getSight().findMate();
 			if (target != null){
 				goal = 2;
-				return 7;
+				return 8;
 			}
 			
 			return 6; //no suitable mate
@@ -800,16 +991,117 @@ public class Organism implements Comparable{
 		//meet friendly organism (and share/trade)
 		//meet neutral organism
 		//attack hostile/neutral organism
+		ArrayList<Integer> count = theOrg.getSight().mobCount();
+		int num = 0;
+		int dice = WorldState.rng3[3].rInt() % 2;
+		if (count.contains(0) && dice == 0) {
+			//random choose to move to an empty spot
+			while (count.get(num) != 0)
+			{//randomly pick a place to go, make sure its empty
+				dice = 1 + (WorldState.rng3[3].rInt() % count.size()-2);
+			}//end while loop
+			
 		
-		return 0; //TODO
+				target = theOrg.getSight().getTarget(num);
+				return 9;
+			} else return helpMoveOptions(count);
 	}
+	
+	public int helpMoveOptions(ArrayList<Integer> count){
+		//assess's the surrounding area
+		int num = 0;
+		
+		if(potentialEnergy() <= 1) {
+			//has no food to share, wander
+			goal = 3;
+			return 0;
+		}
+		if (count.contains(1)){//find spots nearby that are not full
+			Organism targetOrg = null;
+			double temp1 = -100.0, temp2;
+			Patch p = null;
+			ArrayList<Organism> pack = theOrg.getSight().pack();
+
+			for (int i = 1; i < count.size(); i++)
+			{//go through each patch with non-max entities
+				if(count.get(i) == 1){
+					p = theOrg.getSight().getTarget(i);
+					for (int j=0; j < pack.size(); j++)
+					{//examine nearby organisms, determine perceived strength compared to THIS or find FRIENDS
+
+						Organism o = pack.get(j);
+						if (!o.getTheOrg().getPatch().equals(theOrg.getSight().getTarget(i))) continue;
+						if (o.potentialEnergy() >= potentialEnergy()) continue; //same level of food, move along
+						else {
+							Coupling c = findCouple(o);
+							double roll = (WorldState.rng3[3].rDouble() * 2) -1 ;
+							if(c.isPositiveCouple()) if (roll < c.getCoupleAmount()*2) {
+								if (targetOrg == null || targetOrg.potentialEnergy() > o.potentialEnergy()) {
+									targetOrg = o;
+									num = i;
+								} else if (roll > c.getCoupleAmount()*-1){
+									if (targetOrg == null || targetOrg.potentialEnergy() > o.potentialEnergy()) {
+										targetOrg = o;
+										num = i;
+									}
+								}
+							}
+						}
+					}//end for loop (pack)
+				}//end if			
+			}//end for loop (count)
+			if (num ==0 || targetOrg == null) {
+				goal = 3;
+				return 0; //no sharing, move
+			}
+			goal = 4;
+			target = theOrg.getSight().getTarget(num);
+			return 3;
+			}else {//fully surrounded
+				goal = 3;
+				return 7;
+			}
+		}	
+
 	
 	public int paranoia()
 	{//determines if an organism is skittish about nearby organisms
-		//organisms that have higher hostility or flight risk will take safety more seriously
-		double threshold = WorldState.baseSafety + (hostility * (1/3)) + (flightTendency * 0.25); //base value + 1/3 of hostility + 1/4 flightTendency
+		//organisms that have higher flight risk, or are in a weaker state, will take safety more seriously
+		double s = flightTendency + getBattlePenalty() - WorldState.baseSafety;
+		ArrayList<Organism> pack = theOrg.getSight().pack();
+		double friend = 0, foe = 0, neutral = 0;
+		boolean found;
+	
+	Pack_Search: //a goto label
+		for(int i = 0; i < pack.size(); i++)
+		{
+			found = false;
+			for (int j=0; j< pairs.size(); j++){
+				if (found == true) continue;
+				if (pairs.get(j).isCoupled(pack.get(i))) {
+					if (pairs.get(j).isPositiveCouple())  
+					{
+						friend += 1 + pairs.get(j).getCoupleAmount();	
+						found = true;
+						continue Pack_Search;
+					} else 
+						{
+							foe += pairs.get(j).getCoupleAmount();
+							found = true;
+							continue Pack_Search;
+						}
+				}
+			}
+			if (found == false) neutral  += 1;
+		}	
 		
-		return 0; //TODO
+		//counts foes as double versus neutral, and modified by its health and flightTendency
+		int p = (int) Math.ceil((foe * 2 * s + neutral * s - friend));
+		if (safetyPriority > WorldState.MEDIUM || p > 3) fighter.setCornered(true);
+		else fighter.setCornered(false);
+
+		paranoiaLevel = p;
+		return p;
 	}
 	
 	public void reap()
@@ -829,6 +1121,7 @@ public class Organism implements Comparable{
 	public void harvest()
 	{
 		if (actionPoint < 0) return;
+		if (!theOrg.getPatch().hasFood() || theOrg.getPatch().getTheR().getAmount() <=0) return; //no food, or exhausted
 		
 		int amount = calcCollect();
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
@@ -845,7 +1138,7 @@ public class Organism implements Comparable{
 	{//calculates how much to harvest/reap/ask for
 		if (resourceCarryAmount < (kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant)) {
 			int amount = 1 + (int) (((kinetics.getResourceCarryingCapacity()*WorldState.resourceCarryConstant) - resourceCarryAmount) * WorldState.rng3[1].rDouble());
-			if (goodMood) amount = (int) (amount * 1.5);
+			//if (goodMood) amount = (int) (amount * 1.5);
 			return amount;
 		} else return 0; //no space
 	}
@@ -854,7 +1147,7 @@ public class Organism implements Comparable{
 	{//calculates how much to eat this action
 		
 		int amount = 1 + (int) (20 * (1 + pheno.weight()) * WorldState.rng1[5].rDouble());
-		if (!goodMood) amount = (int) (amount * 1.5);
+		//if (!goodMood) amount = (int) (amount * 1.5);
 		return amount;
 	}
 	
@@ -892,9 +1185,140 @@ public class Organism implements Comparable{
 	public int decideFight(Organism o, boolean askedHelp){
 		//0 = decline
 		//3 = fight
-		return 0;
+		//This is where an organism decides if it wants to attack another organism
+		if (o == null) return 0;
+		double roll = WorldState.rng3[3].rDouble();
+		double threshold = pheno.getHostility();
+		
+		/**/ //Organism is starving, sick/wounded and thus desperate
+			Coupling c = findCouple(o);
+			if ((foodPriority == WorldState.CRITICAL) && ((woundPenalty > 0) && (woundPenalty < 0.5))) {			
+				if ((c.isPositiveCouple())) threshold *= (1-c.getCoupleAmount());//good coupling reduces willingness to attack
+				else threshold *= (1+c.getCoupleAmount());//placeholder
+			}else {
+				//determine fear VS Bully VS Aggressor
+				int mState = 0; //0 = neutral, 1 = fear, 2 = Bully, 3 = Aggressor
+				mState = personality();
+				
+				switch (mState) {
+				case 0 : //neutral
+					break;
+				case 1 : //skittish (paranoia high)			
+					threshold *= (1 + (paranoiaLevel/10));//willingness to fight magnified by paranoia
+					break;
+				case 2 : //bully (strength + paranoia low)
+					threshold *= 1/((1 + ((paranoiaLevel)/20)) - weaknessPerception(o));
+					break;
+				case 3 : //aggressor (paranoia low)
+					threshold *= 1/(1 + ((paranoiaLevel)/20));
+					break;
+				default : ;
+				}
+				
+				//determine Anger
+/*				if ((!goodMood) && ((mState == 2) || (mState == 3))) {//if in a bad mood and Bully/Aggressor
+					if (askedHelp && c != null && c.isPositiveCouple()) threshold *= 2 - c.getCoupleAmount(); //slight anger
+					else threshold *= 2; //bigger anger
+				}*/
+							
+					if (c == null) 
+						{//no prior relationship, create it!
+							c = new Coupling(this, o);
+							addPairs(c);
+						}
+						
+				//determine Hate
+				if ((c.isPositiveCouple())) threshold *= (1-c.getCoupleAmount());//good coupling reduces willingness to attack
+				else  threshold *= (1+c.getCoupleAmount());//placeholder				
+			}
+			
+		 //*/
+
+		if (roll < threshold) return 0; //do not fight
+		else return 3; //FIGHT FIGHT FIGHT
 	}
 	
+	private int personality(){
+		int m = 0;
+		double h = pheno.getHostility(), f = flightTendency;
+		
+		if (h > 0.2) {
+			if ((h >= (f * 0.8)) && (f >= (h * 0.8))) {//hostility and flightTendency are close
+				//Bully persona
+				m = 2;
+			}
+			else if (h > f) {
+				// Aggressor Persona
+				m = 3;
+			}
+			else // (f > h)
+			{//skittish Persona
+				//assess paranoia
+				m = 1;			
+			}
+		} else if ( f > 0.2)
+		{//also skittish
+			m=1;
+		} //unstated else = neutral = 0
+		
+		return m;
+	}
+	
+	public double weaknessPerception(Organism o)
+	{
+		double owp = o.getBattlePenalty(), ofe = o.getKinetics().getFightingEffectiveness(), osp = o.getKinetics().getSpeedOfLocomotion();	
+		owp = sensorRoll(owp) - getBattlePenalty();
+		ofe =  kinetics.getFightingEffectiveness() - sensorRoll(ofe);
+		osp =  kinetics.getSpeedOfLocomotion() - sensorRoll(osp);
+		double result = (1-owp) * (ofe + osp/5); //inverse wound penalty * (fighting effectiveness + speed*0.2)
+		return result;
+	}
+	
+	private double sensorRoll(double d)
+	{//to calculate a perceived attribute value of another organism based on this organism's perceptionRadius
+		double p = (1-pheno.getPerceptionRadius())/2;
+		double roll1 = WorldState.rng3[4].rDouble();
+		int roll2 = WorldState.rng3[4].rInt() % 2;
+		double result;
+		if (roll2 == 0)result = d * (1 - p * roll1);
+		else result = d * (1 + p * roll1);
+		
+		if (result < 0) result = 0;
+		else if (result > 1) result = 1;
+		
+		return result;
+	}
+	
+	
+
+	public int respondShare(TradeRequest trAsk, Organism a){
+		//this decided how an entity will respond to being asked to share
+		if (potentialEnergy() <= 1) return EventPack.Decline; //not enough food
+		double roll = WorldState.rng3[2].rDouble(); 
+		Coupling c = findCouple(a);
+		
+		if (c.isPositiveCouple()) {//good relationship
+			if(roll <= c.getCoupleAmount()) //the better the relationship, the more likely to share
+				return EventPack.ShareEvent;
+			else {
+				int d = decideFight(a, false);
+				if (d == 3) return EventPack.FightEvent;
+				else return EventPack.Decline;
+			}
+		}
+		else {
+			if(roll > c.getCoupleAmount()) //the worse the relationship, the less likely to share
+				return EventPack.ShareEvent;
+			else {
+				int d = decideFight(a, false);
+				if (d == 3) return EventPack.FightEvent;
+				else return EventPack.Decline;
+			}
+		}
+	}//end respondShare
+	
+		//TRADE STUFF NOT IMPLEMENTED
+	/*
 	public int respond(TradeRequest trAsk, int eventType) throws AWTException
 	{//redirects to the proper response method
 		if (eventType == EventPack.TradeEvent) return respondTrade(trAsk);
@@ -902,15 +1326,9 @@ public class Organism implements Comparable{
 		else return EventPack.Decline;
 	}
 	
-	public int respondShare(TradeRequest trAsk){
-		//this decided how an entity will respond to being asked to share
-		if (goodMood == false) return EventPack.Decline; //Entity in a bad mood will never share something
-		return 0;
-	}
-	
 	public int respondGift(TradeRequest trGive)
 	{//decide how an organism responds to a gift
-		return 0; //TODO
+		return 0; 
 	}
 	
 	public int respondTrade(TradeRequest trAsk) throws AWTException{
@@ -927,7 +1345,7 @@ public class Organism implements Comparable{
 		} 
 		
 		if (goodMood == false) return EventPack.Decline;
-		//decline, fight or share TODO		
+		//decline, fight or share
 		return 0;
 	}
 	
@@ -942,11 +1360,28 @@ public class Organism implements Comparable{
 	public TradeRequest getTradeRequest(){
 		return tr;
 	}
-	
+	*/
 	public boolean matingRequest(Organism asker)
 	{//decide whether to accept the mating request
-		if (reproPriority > WorldState.NONE) return true; //TODO
-		else return false;
+		double roll = WorldState.rng3[2].rDouble();
+		
+		Coupling c = findCouple(asker);
+
+		if (reproPriority == WorldState.NONE || !c.isPositiveCouple()) return false; 
+		else if (reproPriority == WorldState.CRITICAL) return true;
+		else if (reproPriority == WorldState.HIGH)if (asker.getRFitness() >= rFitness / 2) 
+			{
+				if (roll <= (findCouple(asker).getCoupleAmount()*2)) return true;
+			}
+		else if (reproPriority == WorldState.MEDIUM)if (asker.getRFitness() >= rFitness / 1.5) 			
+		{
+			if (roll <= (findCouple(asker).getCoupleAmount()*1.5)) return true;
+		}
+		else if (reproPriority == WorldState.LOW) if (asker.getRFitness() >= rFitness) 			
+		{
+			if (roll <= findCouple(asker).getCoupleAmount()) return true;
+		}
+		return false; // in case priority is screwed, reject
 	}
 	
 	public int getRpriority()
@@ -964,23 +1399,88 @@ public class Organism implements Comparable{
 		return rFitness;
 	}
 	
-	public void forcedReproduction() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
+	public void forcedReproduction(int p, double[] doubles) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException{
+		int roll = EventPack.litterSize(p, doubles);
+		forcedReproduction(roll);
+	}
+	
+	public void forcedReproduction(int roll) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
 	{//the creator forces spontaneous reproduction
-		if (aSexual) {
-			int roll = (WorldState.rng0[2].rInt() % WorldState.maxLitter) + 1;
+			
+			//if(WorldState.rule127) roll = 2;
+			//else roll = (WorldState.rng0[2].rInt() % WorldState.maxLitter) + 1;
 			double m = theOrg.getPatch().getMutation();
+			int e = energyTransfer(roll);
+			//e == WorldState.baseEnergy * roll + reproEnergyCost; //OVERRIDE, ensures entity has same amount of energy
+			//hp = maxHp;
+			//woundPenalty = 0;
 			
 			for(int i = 0; i < roll; i++)
 			{
-				EventPack.reproductionA(this, m);
+				EventPack.reproductionA(this, m, e);
 			}
-			EventPack.reprodDeath(this);
+			info.cycle += "r";
+			//EventPack.reprodDeath(this);
+	}
+	
+	public Coupling findCouple(Organism o){
+		for (int i = 0; i < pairs.size(); i++)
+		{
+			if (pairs.get(i).isCoupled(o)) return pairs.get(i);
 		}
+		
+		return establishPair(o);
+	}
+
+	public Coupling establishPair(Organism o){
+		Coupling c = new Coupling(this, o);
+		pairs.add(c);
+		o.addPairs(c);
+		return c;
+	}
+	
+	/**
+	 * @param sitCounter the sitCounter to set
+	 */
+	public void incSitCounter(int sitCounter) {
+		this.sitCounter += sitCounter;
 	}
 
 	@Override
 	public int compareTo(Object o) {
 		int rFit = ((Organism)o).getRFitness();
 		return rFit - this.rFitness;
+	}
+
+	public ArrayList<Resource> getInventory() {
+		return inventory;
+	}
+	
+	public void toggleRepro(){
+		if (aSexual) aSexual = false;
+		else aSexual = true;
+	}
+	
+	public int energyTransfer(int litter)
+	{
+		if (energy - WorldState.reproEnergyCost <= 0) return -1; //not enough energy
+		energy -= WorldState.reproEnergyCost;
+		energy /= litter;
+		return energy;
+	}
+	
+	public void rFitCalc(){
+		//calculate rFitness based on specified values
+		rFitness = 0;
+	}
+	
+	public void resetFitness(){
+		inventory.clear();
+		rFitCalc();
+	}
+	
+	public OrgInfo getInfo()
+	{
+		return info;
 	}
 }

@@ -8,8 +8,10 @@ import java.util.ArrayList;
  * 
  */
 public class FileOutput {
-//TODO
+
 	private boolean isDebug = WorldState.isDebug;
+	String logName = WorldState.logFile;
+	String statName = WorldState.statFile;
 	
 	StatPack stats;
 	
@@ -20,11 +22,25 @@ public class FileOutput {
 		outFileStat();			
 	}
 	
+	/**
+	 * 
+	 * @param stat name of stat output file
+	 * @param log name of event log output file
+	 */
+	public synchronized void outputFiles(String stat, String log)
+	{
+		logName = log;
+		statName = stat;
+		stats = Starter.getStats();
+		outFileLog();
+		outFileStat();		
+	}
+	
 	public synchronized void outFileLog()
 	{//this method creates the .log file
 		try {
 				System.out.println("Begin writing to file: " + WorldState.logFile); //for testing
-				PrintWriter out = new PrintWriter(WorldState.logFile);
+				PrintWriter out = new PrintWriter(logName);
 				ArrayList<String> theList = WorldState.getLog();
 				int size = theList.size();
 				
@@ -47,7 +63,7 @@ public class FileOutput {
 		try {
 			System.out.println("Begin writing to file: " + WorldState.statFile); //for testing
 			
-			PrintWriter out = new PrintWriter(WorldState.statFile);
+			PrintWriter out = new PrintWriter(statName);
 
 			ArrayList<String> statLine = gatherStats();
 			int size = statLine.size();
@@ -71,7 +87,34 @@ public class FileOutput {
 	public ArrayList<String> gatherStats() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
 		
 		ArrayList<String> statLine = new ArrayList<String>();
-		String newString = "Name, Generation,";
+		String newString = "Final Stats";
+		statLine.add(newString);
+		//Add Statistical Information from StatPack Class
+				stats.update();
+				reflectPack rs = EventPack.statFields(stats);
+				newString = "";
+				
+				for(int i =0; i < rs.getFieldArrayNames().length; i++)
+				{
+					newString += rs.getFieldArrayNames()[i];
+					newString += ",";
+				}
+				
+				statLine.add(newString);
+				newString = "";
+				
+				for (int j =0; j < rs.getFieldArrayValues().length; j++)
+				{
+					newString += Double.toString(rs.getFieldArrayValues()[j]);
+					newString += ",";
+				}
+				
+		statLine.add(newString);
+		newString = "";
+		statLine.add(newString);
+		//next table of genetic information
+		newString = "Number, Name, Age, Generation, Life-Cycle, Birth-Turn, Death-Turn, Death Reason, Parents";
+		reflectPack ri;		
 		
 		reflectPack rg = EventPack.geneFields(WorldState.geneVault.get(0));
 		reflectPack rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
@@ -97,11 +140,21 @@ public class FileOutput {
 		}
 		statLine.add(newString);
 		
+		
 		for (int i =0; i < WorldState.geneVault.size(); i++) {
-			newString = WorldState.nameVault.get(i) + "," + WorldState.generationVault.get(i) + ",";
+			//newString = WorldState.nameVault.get(i) + "," + WorldState.generationVault.get(i) + ",";
 			rg = EventPack.geneFields(WorldState.geneVault.get(i));
 			rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
 			rk = EventPack.kinFields(new PhenotypeToKinetics(rp.getFieldArrayValues(),rp.getFieldArrayNames()));
+			
+			if(i < WorldState.generationVault.size()) ri = EventPack.infoFields(WorldState.generationVault.get(i));	
+			else ri = EventPack.infoFields(WorldState.generationVault.get(0));
+			newString = "";
+			for (int j =0; j < ri.getFaValues().length; j++)
+			{
+				newString += ri.getFaValues()[j];
+				newString += ",";
+			}
 			
 			for (int j =0; j < rg.getFieldArrayValues().length; j++)
 				{
@@ -121,35 +174,24 @@ public class FileOutput {
 			statLine.add(newString);
 			}
 		
-		newString = "";
-		statLine.add(newString);
-		newString = "Final Stats";
-		statLine.add(newString);
-		
-		//Add Statistical Information from StatPack Class
-		stats.update();
-		reflectPack rs = EventPack.statFields(stats);
-		newString = "";
-		
-		for(int i =0; i < rs.getFieldArrayNames().length; i++)
-		{
-			newString += rs.getFieldArrayNames()[i];
-			newString += ",";
-		}
-		
-		statLine.add(newString);
-		newString = "";
-		
-		for (int j =0; j < rs.getFieldArrayValues().length; j++)
-		{
-			newString += Double.toString(rs.getFieldArrayValues()[j]);
-			newString += ",";
-		}
-		
-		statLine.add(newString);
+
 		
 		return statLine;
 	}
 
+	private int search(int i)
+	{
+		ArrayList<OrgInfo> oi = WorldState.generationVault;
+		
+		for(int j = 0; j < oi.size(); j++)
+		{
+			if (Integer.toString(i).equals(oi.get(j).number))
+			{
+				return j;
+			}
+		}
+		return 0;
+	}
+	
 }
 

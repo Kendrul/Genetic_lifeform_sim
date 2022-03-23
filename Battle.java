@@ -154,12 +154,12 @@ public class Battle {
 		}
 		if (count <= 0) return null; //no valid targets
 		do {
-		//TODO change this to modify targeting priorities
+		//change this to modify targeting priorities
 			targ = WorldState.rng2[1].rInt(targetList.length);
 			if (targ < 0) targ = targ * -1;
 		} while ((targetList[targ].getRunner()) || (!targetList[targ].isAlive()));
 	
-		return targetList[targ]; //TODO
+		return targetList[targ]; 
 	}
 	
 	/**

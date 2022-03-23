@@ -49,9 +49,12 @@ public class Starter{
     private static JButton resetButton;
     private static JButton pauseButton;
     private static JButton continueButton;
+    
+    private static JFrame frame;
      
     static boolean start2 = false;
     static boolean pause2 = false;
+    static boolean start3 = false;
     private static Thread threadObject;
 	
 	
@@ -69,6 +72,7 @@ public class Starter{
 		//worldWindow = terraGenesis();
 		
 		stats = new StatPack();
+		WorldState.resetLogs();
 		WorldState.addLogEvent("Starting Program....");
 		System.out.println("Starting Program...");
 		
@@ -81,7 +85,13 @@ public class Starter{
         		//priority and thus actualize total program control 
         		System.out.print(""); 
         		if(start2 == true){ 			
-        			runSimulation();
+        			runSimulationTrials();
+        			//WorldState.addLogEvent("Terminating Simulation at turn " + getTurn() + ".....");
+        			//FileOutput out = new FileOutput();
+        			//out.outputFiles();
+        			break; 
+        		}else if(start3 == true){
+        			runSimulationTrials();
         			break; 
         		}
 			}
@@ -92,15 +102,35 @@ public class Starter{
 			e.printStackTrace();
 		}
 
-		WorldState.addLogEvent("Terminating Simulation at turn " + getTurn() + ".....");
-		FileOutput out = new FileOutput();
-		out.outputFiles();
+		//WorldState.addLogEvent("Terminating Simulation at turn " + getTurn() + ".....");
+		//FileOutput out = new FileOutput();
+		//out.outputFiles();
 		System.out.println("Terminating Program at turn " + getTurn() + ".....");
 		System.out.println("Start Time: " + start + ", End Time: " + LocalTime.now());
 		
 	}
 	
+	public static void runSimulationTrials()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
+	{//for running multiple simulation runs in serial
+		for(int i =0; i < WorldState.trials; i++){
+			entityGenesis();
+			danceParty();
+			WorldState.addLogEvent("Terminating Simulation " + i+ " at turn " + getTurn() + ".....");
+			System.out.println("Terminating Simulation " + i+ " at turn " + getTurn() + ".....");
+			FileOutput out = new FileOutput();
+			out.outputFiles("colonialCognitionStats" + i + ".csv","colonialCognitionLog" + i + ".txt");
+			reset(i+1);
+		}
+	}
 	
+	public static void reset(int run){
+		stats = new StatPack();
+		WorldState.resetLogs();
+		WorldState.addLogEvent("Starting Simulation " + run);
+		System.out.println("Starting Simulation " + run);
+		grid.resetUniverse(WorldState.pLnum, WorldState.pWnum);
+		grid.repaint();
+	}
 	
 	public static void runSimulation()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
 	{
@@ -111,6 +141,7 @@ public class Starter{
 	
 	private static void entityGenesis()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException{
 		//creates lifeforms
+		lifeForms = new ArrayList<Organism>();
 		Organism e = new Organism();
 		e.setGenes(EventPack.randomGS());
 		lifeForms.add(e);
@@ -122,6 +153,8 @@ public class Starter{
 			e = new Organism();
 			e.setGenes(EventPack.randomGS());
 			lifeForms.add(e);
+			WorldState.addGenerationVault(e.getInfo());
+			e.getInfo().cycle += "g";
 			int x = WorldState.rng1[1].rInt(WorldState.pLnum);
 			int y = WorldState.rng1[2].rInt(WorldState.pWnum);
 			lifeForms.get(i).setTheOrg(new OrganismGFX(grid, x, y));	
@@ -154,7 +187,7 @@ public class Starter{
 						Collections.sort(lifeForms);					
 					}
 				}
-				
+				/*
 				//CULL THE WEAK, THE HARVEST OF SOULS HAS BEGUN
 				//THE SOULS TASTE LIKE CHICKEN
 				int newSize = 0;
@@ -167,23 +200,18 @@ public class Starter{
 					}
 					System.out.println("End Culling");
 				}
-				
-				for (int ix = 0; ix < WorldState.pLength; ix++)
-				{	for (int jy =0; jy < WorldState.pWidth; jy++)
-					{
-						 Patch patch = grid.getPatch(ix, jy);
-						if (patch.isHasResource() && patch.getTheR().getResourceType() == WorldState.resourceType[0])
-						{
-							double roll = WorldState.rng0[2].rDouble();
-							if (roll < WorldState.rReplenishChance[patch.getType()][patch.getTheR().getResourceNum()])
-								patch.getTheR().replenish();
-						}
-					}
-				}
-				
-				for (int index = 0; index < lifeForms.size(); index++){
+								for (int index = 0; index < lifeForms.size(); index++){
 					if ((forceReproduction == true) && (index < ((int) (newSize * 0.40)))) lifeForms.get(index).forcedReproduction();
 					else lifeForms.get(index).move(i);					
+				}*/
+				
+				if(forceReproduction == true){
+					forcedReproductionEvent();
+				}//end forcedReproduction
+				else{//actions do not occur on reproduction turn
+					for (int index = 0; index < lifeForms.size(); index++){
+						lifeForms.get(index).move(i);
+					}
 				}
 
 				grid.repaint();
@@ -206,13 +234,19 @@ public class Starter{
 				  turn++;
 			}//end for loop
 		}//end if-then
+		
+		for(int i = 0; i < lifeForms.size(); i++)
+		{
+			lifeForms.get(i).getInfo().calcAge();
+			//WorldState.addGenerationVault(lifeForms.get(i).getInfo());
+		}
 }//end danceParty
 	
 	private static void emilGenesis()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException{
 		//Create the graphic window, and the world behind it
 
 		grid = new GridUniverse(WorldState.pLnum, WorldState.pWnum);	
-		JFrame frame = new JFrame("Planet Terra Nova");
+		frame = new JFrame("Planet Terra Nova");
 		JFrame btnframe = new JFrame("Control Interface");
 		//I've left some space on the left side of the grid for buttons
 		JPanel btnPanel = btnSetup();	
@@ -229,7 +263,7 @@ public class Starter{
 	      
 		frame.setVisible(true);			
 		btnframe.setVisible(true);
-		lifeForms = new ArrayList<Organism>();	
+			
 	}
 	
     public static JPanel btnSetup(){
@@ -309,7 +343,18 @@ public class Starter{
 		return turn;
 	}
 	
+	public synchronized static void entityDeath(Organism o, String reason)
+	{
+		o.getInfo().deathTurn = Integer.toString(getTurn());
+		o.getInfo().deathReason = reason;
+		o.getInfo().calcAge();
+		//WorldState.addGenerationVault(o.getInfo());
+		o.getInfo().cycle += "d";
+		entityDeath(o);
+	}
+	
 	public synchronized static void entityDeath(Organism o){
+		
 		lifeForms.remove(o);
 		grid.getPatchGrid()[o.getPoint().x][o.getPoint().y].removeE(o);
 	}
@@ -320,7 +365,18 @@ public class Starter{
 	if (lifeForms.size() > 0) {
 		WorldState.addLogEvent("[Turn: " + turn+"] " + lifeForms.get(i).getName() + " has been culled by an act of the Creator.");
 		stats.incCullDeath(1);
-		if (lifeForms.size() > 0) entityDeath(lifeForms.get(i));
+		if (lifeForms.size() > 0) entityDeath(lifeForms.get(i), "Cull");
+	}
+}
+	
+	private static void cull(ArrayList<Organism> newList)
+{
+	//System.out.println("DEATH COMES FOR US ALL");
+	if (newList.size() > 0) {
+		WorldState.addLogEvent("[Turn: " + turn+"] " + newList.get(0).getName() + " has been culled by an act of the Creator.");
+		stats.incCullDeath(1);
+		if (newList.size() > 0) entityDeath(newList.get(0));
+		newList.remove(0);
 	}
 }
 	
@@ -387,5 +443,65 @@ public class Starter{
 	    public static int getGeneration(){
 	    	return generation;
 	    }
-	 
+	    
+	    public static synchronized void forcedReproductionEvent() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
+	    {//handles the forced Reproduction event segments
+	    	double [] rules = reproRuleSelection();
+			ArrayList<Organism> newList1 = new ArrayList<Organism>(), newList2 = new ArrayList<Organism>();
+			int newSize = (int) (WorldState.startOrgNum * rules[0]);
+			if (newSize > lifeForms.size()) newSize = lifeForms.size();
+			
+			
+			for (int j =0; j < lifeForms.size(); j++)
+			{
+				if (j < newSize) newList1.add(lifeForms.get(j));
+				else newList2.add(lifeForms.get(j));
+			}
+			
+			while (newList2.size() > 0){
+				//CULL THE WEAK, THE HARVEST OF SOULS HAS BEGUN
+				//THE SOULS TASTE LIKE CHICKEN
+				cull(newList2); 			
+			}
+			
+			lifeForms.clear();
+			
+			for(int j =0; j < newList1.size(); j++)
+			{
+				newList1.get(j).forcedReproduction(newList1.size(),reproRuleSelection());
+				lifeForms.add(newList1.get(j));
+				newList1.get(j).resetFitness();
+				//newList1.get(j).getInfo().cycle += "r";
+			}
+			
+			newSize = WorldState.startOrgNum - lifeForms.size();
+			for(int j =0; j < newSize; j++){
+				Organism e = new Organism();
+				e.setGenes(EventPack.randomGS());
+				lifeForms.add(e);
+				int x = WorldState.rng1[1].rInt(WorldState.pLnum);
+				int y = WorldState.rng1[2].rInt(WorldState.pWnum);
+				e.setTheOrg(new OrganismGFX(grid, x, y));
+				WorldState.addGenerationVault(e.getInfo());
+				e.getInfo().cycle += "g";
+			}
+			for (int ix = 0; ix < WorldState.pLength; ix++)
+			{	for (int jy =0; jy < WorldState.pWidth; jy++)
+				{
+					 Patch patch = grid.getPatch(ix, jy);
+					if (patch.isHasResource() && patch.getTheR().getResourceType() == 0)
+					{//reset the resources
+						patch.getTheR().replenish2();
+					}	
+				}
+			}
+	    }//end forcedReproductionEvent
+	    
+	    private static double [] reproRuleSelection(){
+	    	//choose reproduction rule to apply
+	    	//How do we create our nextGen pop
+	    	//[0] = % reproduction candidates, [1] = % of born, [2] = % of random gen pops
+	    	double [] rule = {0.1, 0.7, 0.2}; //172 rule
+	    	return rule;
+	    }
 }

@@ -2,6 +2,7 @@ import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Robot;
+import java.util.ArrayList;
 
 public class Perception{
 	OrganismGFX organism;
@@ -174,5 +175,45 @@ public class Perception{
 			}
 		}
 		return optimalSpot;
+	}
+	
+	public ArrayList<Organism> pack(){
+		ArrayList<Organism> o = new ArrayList<Organism>();
+		for(int i = 1; i < perceptionRadiusBlocks.length; i++)
+		{//skip first spot, we already checked it
+			if (perceptionRadiusBlocks[i] == null) continue; //might have nulls because of boundary
+			if (perceptionRadiusBlocks[i].isHasEntity())
+			{
+				for(int j = 0; j < perceptionRadiusBlocks[i].theE.size(); j++)
+				{
+					if (perceptionRadiusBlocks[i].getTheE(j) != organism.getOwner())
+						o.add(perceptionRadiusBlocks[i].getTheE(j));
+				}
+			}
+		}
+		return o;
+	}
+	
+	public ArrayList<Integer> mobCount(){
+		ArrayList<Integer> count = new ArrayList<Integer>();
+		count.add(-1); //first spot is irrelevant
+		for(int i = 1; i < perceptionRadiusBlocks.length; i++)
+		{
+			if (perceptionRadiusBlocks[i] == null) {
+				count.add(-1);
+				continue; //might have nulls because of boundary
+			}
+			if (perceptionRadiusBlocks[i].isHasEntity())
+			{
+				count.add(perceptionRadiusBlocks[i].theE.size());
+			}
+		}
+		return count;
+	}
+	
+	public Patch getTarget(int spot)
+	{
+		if (spot < 0 || spot > perceptionRadiusBlocks.length) return null; //error check redundancy
+		else return perceptionRadiusBlocks[spot];
 	}
 }

@@ -35,7 +35,22 @@ public class GridUniverse extends JPanel{
 	
 	//Colors
 	private Color orgColor = Color.red;
-	private Color orgColor2 = Color.black;
+	private Color orgColor2 = Color.pink;
+	private Color orgColor3 = Color.black;
+	private Color orgColor4 = Color.white; 
+	private Color orgColor5 = Color.GRAY;
+	
+	//Colors used to ID organisms "tribe" if you will (biologically tied to eye size); thus organisms
+	//actually look at one another's eye sizes to determine similarity between one another
+	private Color colorIDString = new Color(255, 0, 0); 
+	//private Color colorPhenotypeID2 = new Color(0, 64, 0);
+	//private Color colorPhenotypeID3 = new Color(0, 0, 64);
+	//private Color colorPhenotypeID4 = new Color(64, 0, 64);
+	private int numberPhenotypeID1 = 1;
+	private int numberPhenotypeID2 = 2;
+	private int numberPhenotypeID3 = 3;
+	private int numberPhenotypeID4 = 4;
+
 	private Color gridColor = Color.black;
 	private Color textColor = Color.black;
 	private Color borderColor = Color.blue;
@@ -64,7 +79,39 @@ public class GridUniverse extends JPanel{
 				{
 					if(tSeed < (WorldState.terrainProb[i] + cumulative))
 					{
-						seed = i;//TODO
+						seed = i;
+						break;
+					}else
+					{
+						cumulative += WorldState.terrainProb[i];
+					}
+				}
+				
+				patchGrid[ix][jy] = new Patch(ix*WorldState.pLength, jy*WorldState.pWidth, seed);
+				patchGrid[ix][jy].spawnResource(WorldState.rng0[2].rDouble());
+				//if(isDebug) System.out.println("Patch(" + ix + "," + jy + ") color: " + patchGrid[ix][jy].getType() + ", seed: " + seed);
+			}
+		}
+		WorldState.addLogEvent("The World has been created.");
+	}
+	
+	public void resetUniverse(int x, int y)
+	{
+		fillCells = new ArrayList<>();
+		patchGrid = new Patch [x][y];
+		
+		for (int ix = 0; ix < x; ix++)
+		{
+			for (int jy = 0; jy < y; jy++){
+				double tSeed = WorldState.rng0[0].rDouble();
+				double cumulative = 0;
+				int seed = 0;
+				
+				for (int i = 0; i < WorldState.terrainProb.length; i++)
+				{
+					if(tSeed < (WorldState.terrainProb[i] + cumulative))
+					{
+						seed = i;
 						break;
 					}else
 					{
@@ -180,8 +227,10 @@ public class GridUniverse extends JPanel{
 			//DRAW RESOURCE
 			if (patch.isHasResource())
 			{//draw the resources that belong on the map
-				if (patch.getTheR().getAmount() > 0) g.setColor((patch.getTheR().getrColor()));
-				else g.setColor(WorldState.rExhaustionColor);
+				//if (patch.getTheR().getAmount() > 0) g.setColor((patch.getTheR().getrColor()));
+				//else g.setColor(WorldState.rExhaustionColor);
+				if (!patch.hasFood() || patch.getTheR().getAmount() <= 0) g.setColor(WorldState.rExhaustionColor);
+				else g.setColor((patch.getTheR().getrColor()));
 				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
 				
@@ -202,18 +251,228 @@ public class GridUniverse extends JPanel{
 			
 			//DRAW ENTITY
 			if (patch.isHasEntity()) {
-				if ((patch.population() > 1 ) && (patch.getLocalEvent() != null))
-				{
-					g.setColor((textColor));
-					g.drawString(patch.getLocalEvent(), cellX, cellY);
-				}else {
-					g.setColor((orgColor)); //our little red riding hood
-					//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
-					//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
-					g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
-					//g.fillOval(cellX + (length*(4/5)), cellY + (width * (4/5)), 2* length/5, 2* width/5);
-					g.setColor(orgColor2);
-					g.fillOval(cellX + (length/2) - 1, cellY + (width/2) -1, 2* length/5, 2* width/5);
+				g.setColor((orgColor3)); //our little red riding hood
+				//g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				//g.fillOval(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));
+				
+				Organism thisOrganism = patch.getTheE();
+				GeneToPhenotype thisOrganismsPhenotype = thisOrganism.getPheno(); 
+				double limbLength = thisOrganismsPhenotype.limbLength; 
+				double limbStructuralStrength = thisOrganismsPhenotype.limbStructuralStrength;
+				
+				//get facial characteristics
+				double eyeSize = thisOrganismsPhenotype.eyeSize;
+				double facialLength = thisOrganismsPhenotype.facialLength;
+				double facialWidth = thisOrganismsPhenotype.facialWidth; 
+				double organismsColorID = thisOrganismsPhenotype.generalPhenotype; 
+				
+				//get patch's center
+				int[] centerOfPatch = patch.findCenter();
+				int centerX = centerOfPatch[0];
+				int centerY = centerOfPatch[1];
+				
+				//patch.
+				
+				//get patch's upper left corner
+				int patchX = patch.getX();
+				int patchY = patch.getY(); 
+				 
+				//make sure phenotype shapes don't go out of patch bounds
+				int deltaCenterXToBound = centerX - patchX; 
+				int deltaCenterYToBound = centerY - patchY; 
+				
+				
+				if(limbLength < 0.25){	
+					if(limbStructuralStrength < 0.25){
+						g.fillRect(cellX + width - width/7, cellY + width - length/4, width/7, length/4);
+						g.fillRect(cellX, cellY + width - length/4, width/7, length/4);
+					}
+					if(limbStructuralStrength >= 0.25 && limbStructuralStrength < 0.5){
+						g.fillRect(cellX + width - width/6, cellY + width - length/4, width/6, length/4);
+						g.fillRect(cellX, cellY + width - length/4, width/6, length/4);
+					}
+					if(limbStructuralStrength >= 0.5 && limbStructuralStrength < 0.75){
+						g.fillRect(cellX + width - width/5, cellY + width - length/4, width/5, length/4);
+						g.fillRect(cellX, cellY + width - length/4, width/5, length/4);
+					}
+					//if(limbStructuralStrength < 0.25){
+					else{
+						g.fillRect(cellX + width - width/4, cellY + width - length/4, width/4, length/4);
+						g.fillRect(cellX, cellY + width - length/4, width/4, length/4);
+					}
+					
+				}
+				else if(limbLength >= 0.25 && limbLength < 0.5){
+					//g.fillRect(cellX + width - width/6, cellY, width/6, length/3);
+					//g.fillRect(cellX, cellY, width/6, length/3);
+					
+					if(limbStructuralStrength < 0.25){
+						g.fillRect(cellX + width - width/7, cellY + width - length/3, width/7, length/3);
+						g.fillRect(cellX, cellY + width - length/3, width/7, length/3);
+					}
+					else if(limbStructuralStrength >= 0.25 && limbStructuralStrength < 0.5){
+						g.fillRect(cellX + width - width/6, cellY + width - length/3, width/6, length/3);
+						g.fillRect(cellX, cellY + width - length/3, width/6, length/3);
+					}
+					else if(limbStructuralStrength >= 0.5 && limbStructuralStrength < 0.75){
+						g.fillRect(cellX + width - width/5, cellY + width - length/3, width/5, length/3);
+						g.fillRect(cellX, cellY + width - length/3, width/5, length/3);
+					}
+					//if(limbStructuralStrength < 0.25){
+					else{
+						g.fillRect(cellX + width - width/4, cellY + width - length/3, width/4, length/3);
+						g.fillRect(cellX, cellY + width - length/3, width/4, length/3);
+					}
+				} 
+				else if(limbLength >= 0.5 && limbLength < 0.75){
+					//g.fillRect(cellX + width - width/5, cellY, width/5, length/2);
+					//g.fillRect(cellX, cellY, width/5, length/2);
+					
+					if(limbStructuralStrength < 0.25){
+						g.fillRect(cellX + width - width/7, cellY + width - length/2, width/7, length/2);
+						g.fillRect(cellX, cellY + width - length/2, width/7, length/2);
+					}
+					else if(limbStructuralStrength >= 0.25 && limbStructuralStrength < 0.5){
+						g.fillRect(cellX + width - width/6, cellY + width - length/2, width/6, length/2);
+						g.fillRect(cellX, cellY + width - length/2, width/6, length/2);
+					}
+					else if(limbStructuralStrength >= 0.5 && limbStructuralStrength < 0.75){
+						g.fillRect(cellX + width - width/5, cellY + width - length/2, width/5, length/2);
+						g.fillRect(cellX, cellY + width - length/2, width/5, length/2);
+					}
+					//if(limbStructuralStrength < 0.25){
+					else{
+						g.fillRect(cellX + width - width/4, cellY + width - length/2, width/4, length/2);
+						g.fillRect(cellX, cellY + width - length/2, width/4, length/2);
+					}
+				}
+				//if(limbLength >= 0.75){
+				else{
+					//g.fillRect(cellX + width - width/4, cellY, width/4, length);
+					//g.fillRect(cellX, cellY, width/4, length);
+					
+					if(limbStructuralStrength < 0.25){
+						g.fillRect(cellX + width - width/7, cellY + width - length, width/7, length);
+						g.fillRect(cellX, cellY + width - length, width/7, length);
+					}
+					else if(limbStructuralStrength >= 0.25 && limbStructuralStrength < 0.5){
+						g.fillRect(cellX + width - width/6, cellY + width - length/2, width/6, length);
+						g.fillRect(cellX, cellY + width - length, width/6, length);
+					}
+					else if(limbStructuralStrength >= 0.5 && limbStructuralStrength < 0.75){
+						g.fillRect(cellX + width - width/5, cellY + width - length, width/5, length);
+						g.fillRect(cellX, cellY + width - length, width/5, length);
+					}
+					//if(limbStructuralStrength < 0.25){
+					else{
+						g.fillRect(cellX + width - width/4, cellY + width - length, width/4, length);
+						g.fillRect(cellX, cellY + width - length, width/4, length);
+					}
+				}
+				
+				
+				
+				//g.fillOval(cellX + (length/5), cellY + (width/5), 2* length/5, 2* width/5);
+				
+				
+				//drawing the face
+				g.setColor(orgColor5);
+				
+				if(facialLength < 0.25){
+					g.fillOval(cellX, cellY, width, length/7);
+					if(facialWidth < 0.25){
+						g.fillOval(cellX + width/2 - width/10, cellY, width/5, length/2);	
+					}
+					else if(facialWidth >= 0.25 && facialWidth < 0.5){
+						g.fillOval(cellX + width/2 - width/8, cellY, width/4, length/2);
+					}
+					else if(facialWidth >= 0.5 && facialWidth < 0.75){
+						g.fillOval(cellX + width/2 - width/6, cellY, width/3, length/2);
+					}
+					else{
+						g.fillOval(cellX + width/2 - width/4, cellY, width/2, length/2);
+					}
+				}
+				else if(facialLength >= 0.25 && facialLength < 0.5){
+					//g.fillOval(cellX, cellY, width, length/4);
+					g.fillOval(cellX, cellY, width, length/7);
+					if(facialWidth < 0.25){
+						g.fillOval(cellX + width/2 - width/10, cellY, width/5, length/4);						
+					}
+					else if(facialWidth >= 0.25 && facialWidth < 0.5){
+						g.fillOval(cellX + width/2 - width/8, cellY, width/4, length/4);
+					}
+					else if(facialWidth >= 0.5 && facialWidth < 0.75){
+						g.fillOval(cellX + width/2 - width/6, cellY, width/3, length/4);
+					}
+					else{
+						g.fillOval(cellX + width/2 - width/4, cellY, width/2, length/4);
+					}
+				}
+				else if(facialLength >= 0.5 && facialLength < 0.75){
+					g.fillOval(cellX, cellY, width, length/7);
+					if(facialWidth < 0.25){
+						g.fillOval(cellX + width/2 - width/10, cellY, width/5, length/3);						
+					}
+					else if(facialWidth >= 0.25 && facialWidth < 0.5){
+						g.fillOval(cellX + width/2 - width/8, cellY, width/4, length/3);
+					}
+					else if(facialWidth >= 0.5 && facialWidth < 0.75){
+						g.fillOval(cellX + width/2 - width/6, cellY, width/3, length/3);
+					}
+					else{
+						g.fillOval(cellX + width/2 - width/4, cellY, width/2, length/3);
+					}
+				}
+				else{
+					g.fillOval(cellX, cellY, width, length/7);
+					if(facialWidth < 0.25){
+						g.fillOval(cellX + width/2 - width/10, cellY, width/5, length/2);						
+					}
+					else if(facialWidth >= 0.25 && facialWidth < 0.5){
+						g.fillOval(cellX + width/2 - width/8, cellY, width/4, length/2);
+					}
+					else if(facialWidth >= 0.5 && facialWidth < 0.75){
+						g.fillOval(cellX + width/2 - width/6, cellY, width/3, length/2);
+					}
+					else{
+						g.fillOval(cellX + width/2 - width/4, cellY, width/2, length/2);
+					}
+				}
+				
+				//drawing the eyes 
+				g.setColor(orgColor4);
+				
+				if(eyeSize < 0.25){
+					g.fillOval(cellX + width - width/5, cellY, width/5, length/5);
+					g.fillOval(cellX, cellY, width/5, length/5);
+					g.setColor(colorIDString);
+					g.drawString(String.valueOf(numberPhenotypeID1), cellX + width/2 - 3, cellY + width);
+					//g.fillRect(cellX, cellY + width/2 + 2, width, length/5);
+				}
+				else if(eyeSize >= 0.25 && eyeSize < 0.5){
+					g.setColor(orgColor4);
+					g.fillOval(cellX + width - width/4, cellY, width/4, length/4);
+					g.fillOval(cellX, cellY, width/4, length/4);
+					g.setColor(colorIDString);
+					//g.fillRect(cellX, cellY + width/2 + 2, width, length/5);
+					g.drawString(String.valueOf(numberPhenotypeID2), cellX + width/2 - 3, cellY + width);
+				}
+				else if(eyeSize >= 0.5 && eyeSize < 0.75){
+					g.setColor(orgColor4);
+					g.fillOval(cellX + width - width/3, cellY, width/3, length/3);
+					g.fillOval(cellX, cellY, width/3, length/3);
+					g.setColor(colorIDString);
+					//g.fillRect(cellX, cellY + width/2 + 2, width, length/5);
+					g.drawString(String.valueOf(numberPhenotypeID3), cellX + width/2 - 3, cellY + width);
+				}
+				else{
+					g.setColor(orgColor4);
+					g.fillOval(cellX + width - width/2, cellY, width/2, length/2);
+					g.fillOval(cellX, cellY, width/2, length/2);
+					g.setColor(colorIDString);
+					//g.fillRect(cellX, cellY + width/2 + 2, width, length/5);
+					g.drawString(String.valueOf(numberPhenotypeID4), cellX + width/2 - 3, cellY + width);
 				}
 				patch.setLocalEvent(null); //events last 1 turn?
 			}//draw entity

@@ -21,13 +21,13 @@ public class StatPack {
 	double foodHarvest = 0;
 	double foodReap = 0;
 	double foodConsumed = 0;
-	double foodTraded = 0;
+	//double foodTraded = 0;
 	double foodShared = 0;
 	double foodStolen = 0;
 	double replenishedAmount = 0;
 	
 	//event stats
-	double tradeEvents = 0;
+	//double tradeEvents = 0;
 	double asexualReproductionEvents = 0;
 	double sexualReproductionEvents = 0;
 	double shareEvents = 0;
@@ -138,9 +138,9 @@ public class StatPack {
 	/**
 	 * @param foodTraded the foodTraded to inc
 	 */
-	public synchronized void incFoodTraded(double foodTraded) {
+	/*public synchronized void incFoodTraded(double foodTraded) {
 		this.foodTraded += foodTraded;
-	}
+	}*/
 
 	/**
 	 * @param foodShared the foodShared to inc
@@ -159,9 +159,9 @@ public class StatPack {
 	/**
 	 * @param tradeEvents the tradeEvents to inc
 	 */
-	public synchronized void incTradeEvents(double tradeEvents) {
+/*	public synchronized void incTradeEvents(double tradeEvents) {
 		this.tradeEvents += tradeEvents;
-	}
+	}*/
 
 	/**
 	 * @param reproductionEvents the reproductionEvents to inc

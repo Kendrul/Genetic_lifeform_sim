@@ -26,6 +26,7 @@ public class Resource {
 		rColor = WorldState.resourceColor[num];
 		rShape = WorldState.resourceShape[num];
 		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
+		startAmount = amount;
 	}
 	
 	public Resource(Resource clone, int a)
@@ -131,19 +132,27 @@ public class Resource {
 	
 	public void replenish()
 	{
-		if (amount < (startAmount * WorldState.respawnAmountMax)){
+		if ((amount == 0) || (amount < (startAmount * WorldState.respawnAmountMax))){
 		
 			double spawnRoll = WorldState.rng0[0].rDouble();
 			if (spawnRoll <= WorldState.rReplenishChance[home.getType()][resourceNum]);
 			{
 				double amountRoll = WorldState.rng0[1].rDouble();
 				amount += (startAmount * WorldState.respawnAmountMax) * amountRoll;
-				WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + getName() + " regrew " + amount + " units.");
+				//home.s
+				WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + getName() + " regrew " + amount + " units on location (" + home.getX() +","+ home.getY() +").");
 				Starter.getStats().incReplenishedAmount(amount);
 				Starter.getStats().incReplenishEvents(1);
 			}
 		}
 	}
 	
+	public void replenish2()
+	{//reset's the resource value of the patch back to the start value
+		amount = startAmount;
+		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + getName() + " regrew " + amount + " units on location (" + home.getX() +","+ home.getY() +").");
+		Starter.getStats().incReplenishedAmount(amount);
+		Starter.getStats().incReplenishEvents(1);
+	}
 	
 }

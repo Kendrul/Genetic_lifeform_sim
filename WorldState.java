@@ -12,16 +12,22 @@ import java.util.Random;
 public class WorldState {
 	
 	//START CONSTANTS
-	public static final int turns = 1001; //if we wish to limit the number of turns
+	public static final int trials = 1;
+	public static final int turns = 9999; //if we wish to limit the number of turns
 	public static final boolean useTurns = true; //true to use above number, false to ignore
-	public static final int startOrgNum = 1000;
+	public static final int startOrgNum = 100;
 	public static final int sleepTime = 66;
 	public static final boolean allowResourceExhaustion = false;
+	
+	//Rules
+	//ForcedReproduction Rule
+	public static boolean rule127 = true;
 	
 	//TESTING FLAGS
 	public static final boolean isDebug = false;
 	public static final boolean trueRandom = true;
-	public static final int forcedReproductionEvent = 200;
+	public static final int forcedReproductionEvent = 500;
+	public static final boolean reproductionDeath = false; //true = die when reproduce, false = keep living
 	
 	//SEEDS
 	public static final int seed0 = 564421;
@@ -35,9 +41,9 @@ public class WorldState {
 	//RANDOM NUMBER MAKERS
 	public static final int streamNumber = 6;
 	public static RandomNumberMaker [] rng0; //FOR PATCH-RESOURCE(spawn/replenish amount, spawn/replenish chance)-MUTATION(pickParent/litterSize, drift/radical chance, gene value)
-	public static RandomNumberMaker [] rng1; //FOR ENTITY'S (Genes, x-coord, y-coord, name, woundStuff/mood, food-eat)
+	public static RandomNumberMaker [] rng1; //FOR ENTITY'S (Genes, x-coord, y-coord, name/fight decision, woundStuff/mood, food-eat)
 	public static RandomNumberMaker [] rng2; //BATTLE(speed tiebreaker)-TEAM1(target choice, run success, action choice, attack-crit, attack-dodge)
-	public static RandomNumberMaker [] rng3; //ACTIONS(priority choice, harvest, action choice, direction choice
+	public static RandomNumberMaker [] rng3; //ACTIONS(priority choice, harvest, action choice, direction choice, persona chance
 	//public static RandomNumberMaker [] rng4; //RESERVED
 	public static RandomNumberMaker rngMove; //Movement
 		
@@ -47,13 +53,15 @@ public class WorldState {
 	public static final double radicalMutation = 0.01;
 	public static final int maxLitter = 20;
 	private static int counterID = 1;
+	public static int sitMax = 10;
+	public static int baseEnergy = 100;
 	
 	//world/patch/window dimensions
 	//World Size must be be divisible by patch size, or else it will BREAK
 	public static final int wLength = 1200; 
 	public static final int wWidth = 800; 
 	public static final int bLength = 400;
-	public static final int pLength = 10;
+	public static final int pLength = 20;
 	public static final int pWidth = pLength;
 	public static final int pLnum = wLength / pLength;
 	public static final int pWnum = wWidth / pWidth;
@@ -85,16 +93,16 @@ public class WorldState {
 	//EXAMPLE: Food is type 0, and represented by triangle. A specific type of food, say Apple which is 0 would be red (and a triangle)
 	
 	public static final double [][] rSpawnChance = { {0.05, 0}, {0, 0.05}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of spawning that resource
-	public static final double [][] rReplenishChance = { {0.10, 0}, {0, 0.10}, {0.05, 0.05}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
+	public static final double [][] rReplenishChance = { {0.20, 0}, {0, 0.20}, {0.10, 0.10}};//X = terrain, Y = resourceNum, the value is the probability of respawning an existing resource
 	public static final double respawnAmountMax = 0.5; //dependant on initial value
 	
 	//outputStuff
-	public static ArrayList<String> EventLog= new ArrayList<String>();
+	public static ArrayList<String> EventLog;
 	public static String logFile = "colonialCognitionLog.txt";
 	public static String statFile = "colonialCognitionStats.csv";
 	public static ArrayList<String> nameVault = new ArrayList<String>();
 	public static ArrayList<GeneSequence> geneVault = new ArrayList<GeneSequence>();
-	public static ArrayList<Integer> generationVault = new ArrayList<Integer>();
+	public static ArrayList<OrgInfo> generationVault = new ArrayList<OrgInfo>();
 	
 	//LOG FLAGS
 	public static boolean logMove = true;
@@ -106,6 +114,7 @@ public class WorldState {
 	public static int resourceCarryConstant = 100; //carryCapacity is multiplied by this constant to find the organism's ability
 	public static int reproductiveMaturityAge = 13;
 	
+	
 	//ORGANISM ENERGY CONSTANTS
 	public static final int regenThreshold = 20;
 	public static final int lowEnergyThreshold = 40;
@@ -113,6 +122,7 @@ public class WorldState {
 	public static final double fatiguePenalty = 0.10;
 	public static final int fightEnergyCost = 0;
 	public static final int moveEnergyCost = 0;
+	public static int reproEnergyCost = 0;
 	public static final int lifeEnergyCost = 10; //energy consumed per turn just for living, multiplied by neuro
 	public static final int calorieFactor = lowEnergyThreshold / 4; //energy generated per food unit
 	
@@ -137,9 +147,16 @@ public class WorldState {
 	{
 		return EventLog;
 	}
+	
+	public static void resetLogs(){
+		EventLog = new ArrayList<String>();
+		nameVault = new ArrayList<String>();
+		geneVault = new ArrayList<GeneSequence>();
+		generationVault = new ArrayList<OrgInfo>();
+	}
 
 	public static ArrayList<String> getStats()
-	{//TODO Output an ArrayList of statistical information, which needs to be generated first
+	{//Output an ArrayList of statistical information, which needs to be generated first
 		return EventLog;
 	}
 	
@@ -215,7 +232,7 @@ public class WorldState {
 	 * @param generationVault the generationVault to set
 	 */
 	public static synchronized void addGenerationVault(
-			int g) {
+			OrgInfo g) {
 		WorldState.generationVault.add(g);
 	}
 	

@@ -1,8 +1,9 @@
 
 
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
+
+import old.CulturalPhenotype;
 
 
 public class GeneToPhenotype {
@@ -16,6 +17,7 @@ public class GeneToPhenotype {
 	double neurocyteGenesisEfficiency; 
 	double eyeSize, cranialSize, facialLength, facialWidth; 
 	double generalPhenotype; 
+	double agreeability;
 	//double trade;
 	boolean isDebug = WorldState.isDebug;
 	 
@@ -32,6 +34,7 @@ public class GeneToPhenotype {
 		neuralMass = getNeuralMass();
 		perceptionRadius = getPerceptionRadius(); 
 		hostility = getHostility(); 
+		agreeability = getAgreeability();
 		moodPositive = getMood();
 		fightResponse = getFightResponse(); 
 		colonialCognitionCapacity = getColonialCognitionCapacity(); 
@@ -46,7 +49,7 @@ public class GeneToPhenotype {
 		neurocyteGenesisEfficiency = getNeurocyteGenesisEfficiency();
 				
 		generalPhenotype = getGeneralPhenotype();
-		CulturalPhenotype Billy_Bob_Culture = new CulturalPhenotype(generalPhenotype);
+		//CulturalPhenotype Billy_Bob_Culture = new CulturalPhenotype(generalPhenotype);
 		
 		//below used for debug (will freeze)
 		//use this mech for pause
@@ -227,10 +230,19 @@ public class GeneToPhenotype {
 			} 
 		}
 		hostility = (neuralMass + hostility)/2;
+		hostility = (hostility + (1 - getMood()))/2; //(1 - getMood) will give us negative mood
 		return hostility; 
 	}
 	
 	
+	public double getAgreeability(){
+		agreeability = 1 - getHostility();
+		
+		return agreeability; 
+	}
+	
+	//*******changes made here as well********
+	//inclination for positive mood
 	public double getMood(){
 		for (int i = 0; i < genoArray.length; i++){
 			if(genoArrayNames[i].contains("Neuro") && genoArrayNames[i].contains("MoodPositive")){
@@ -281,6 +293,7 @@ public class GeneToPhenotype {
 		return facialWidth; 
 	}
 
+    //******no longer used in facial phenotype*******
     public double getCranialSize(){
 		cranialSize = (neurocyteGenesisEfficiency*1.5 + colonialCognitionCapacity*0.5)/2; 
     	
@@ -337,12 +350,27 @@ public class GeneToPhenotype {
 	//highest priority feature is eye size
 	//lowest priority feature is cranial size (hence recognitionPriority getting smaller with each iteration)
 	public double getGeneralPhenotype(){
-		double[] generalPhenotypeArray = {eyeSize, facialLength, facialWidth, cranialSize}; 
+		int colorValue;
+		if(eyeSize < 0.25){
+			colorValue = 1;
+		}
+		else if(eyeSize >= 0.25 && eyeSize < 0.5){
+			colorValue = 2;
+		}
+		else if(eyeSize >= 0.5 && eyeSize < 0.75){
+			colorValue = 3;
+		}
+		else{
+			colorValue = 4;
+		}
+		
+		/*double[] generalPhenotypeArray = {eyeSize, facialLength, facialWidth}; //*****got rid of cranialSize in this array
 		for(double i = 0, recognitionPriority = 1; i < generalPhenotypeArray.length; i++, recognitionPriority -= 0.2){
 			generalPhenotype += generalPhenotypeArray[(int)i]*recognitionPriority;
 		}
 		generalPhenotype /= (generalPhenotypeArray.length);
-		//generalPhenotype = Arrays.hashCode(genoArray); 		
-		return generalPhenotype; 
-	}	
+		//generalPhenotype = Arrays.hashCode(genoArray); 		*/
+		generalPhenotype = colorValue; 
+		return generalPhenotype;  //*********this name should be changed to colorPhenotype used by entities to identify kin
+	}
 }

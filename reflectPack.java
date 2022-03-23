@@ -6,6 +6,7 @@ public class reflectPack {
 
 	private double[] fieldArrayValues;
 	private String[] fieldArrayNames;
+	private String[] faValues;
 	Field[] fieldArray;
 	
 	/**
@@ -18,6 +19,13 @@ public class reflectPack {
 	{
 		Field[] fieldArray = f;	
 		fieldArrayValues = d;
+		fieldArrayNames = s;
+	}
+	
+	public reflectPack(Field [] f,String [] d, String [] s)
+	{
+		Field[] fieldArray = f;	
+		faValues = d;
 		fieldArrayNames = s;
 	}
 
@@ -43,6 +51,20 @@ public class reflectPack {
 
 	public void setFieldArrayNames(String[] genoArrayNames) {
 		this.fieldArrayNames = genoArrayNames;
+	}
+
+	/**
+	 * @return the faValues
+	 */
+	public String[] getFaValues() {
+		return faValues;
+	}
+
+	/**
+	 * @param faValues the faValues to set
+	 */
+	public void setFaValues(String[] faValues) {
+		this.faValues = faValues;
 	}
 	
 	

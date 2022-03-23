@@ -21,7 +21,6 @@ public GeneticMutation(Organism dad, Organism mom, double mutation){
 	mother = mom;
 	mutationFactor = mutation;
 	
-	//TODO stats?
 	child = new Organism();
 
 }//end constructor
@@ -32,7 +31,6 @@ public GeneticMutation(Organism mom, double mutation){
 	father = mom;
 	mutationFactor = mutation;
 	
-	//TODO stats?
 	child = new Organism();
 
 }//end constructor

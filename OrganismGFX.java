@@ -268,8 +268,9 @@ public void randomMove() throws AWTException {
 			canMove = true;
 		
 			double roll = WorldState.rng3[3].rDouble();
-			if ( roll <= totalRandomMoveChance) {
+			if ( roll != totalRandomMoveChance) {
 				//erratic movement pattern
+				//TODO
 				randomMove();
 				return;
 			}	

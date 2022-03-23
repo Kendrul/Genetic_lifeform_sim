@@ -18,7 +18,7 @@ public class Patch {
 	private boolean hasEntity = false;
 	private double mutationFactor = 0;
 	
-	private ArrayList<Organism> theE = null;
+	public ArrayList<Organism> theE = null;
 	private Resource theR = null;
 	private String localEvent = null;
 	
@@ -44,7 +44,7 @@ public class Patch {
 				if(roll < (WorldState.rSpawnChance[type][i] + cumulative))
 				{
 					hasResource = true; 
-					theR = new Resource(0, i, this); //TODO
+					theR = new Resource(0, i, this); 
 					break;
 				}else
 				{
@@ -144,7 +144,7 @@ public class Patch {
 		hasEntity = false;
 	}
 	
-	public boolean hasFood()
+	public synchronized boolean hasFood()
 	{
 		if (theR != null){
 			if((theR.getResourceType() == WorldState.resourceType[0]) && (theR.getAmount() > 0))
@@ -190,6 +190,14 @@ public class Patch {
 	public double getMutation()
 	{
 		return mutationFactor;
+	}
+	
+	public Organism findOtherOrg(Organism o){
+		for (int i = 0; i < theE.size(); i++){
+			if (theE.get(i).equals(o)) continue;
+			else return theE.get(i);
+		}
+		return null;
 	}
 	
 }

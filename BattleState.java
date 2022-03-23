@@ -7,6 +7,7 @@ public class BattleState {
 	Organism owner;
 	boolean isDebug = WorldState.isDebug;
 	boolean runner;
+	boolean cornered;
 
 	int teamNumber;
 	
@@ -52,9 +53,11 @@ public class BattleState {
 		double roll = WorldState.rng2[4].rDouble();
 		
 		if (roll < owner.getCrit()) {
-			return owner.getAttack() * 2;
+			if (!cornered) return (int) Math.ceil(owner.getAttack() * 2);
+			else return (int) Math.ceil(owner.getAttack() * 2.25);
 		}
-		else return owner.getAttack();
+		else if (!cornered) return owner.getAttack();
+			else return (int) Math.ceil(owner.getAttack() * 1.25 );
 		//too wounded to fight back
 		} else {
 			if (isDebug) System.out.println(owner.getName() + " is too wounded to react.");
@@ -67,7 +70,8 @@ public class BattleState {
 		if (damage <= 0) return true;
 		double roll = WorldState.rng2[5].rDouble();
 		if (roll >= owner.getDodge()) {
-		owner.setHp(owner.getHp() - damage);
+			if (!cornered) owner.setHp(owner.getHp() - damage);
+			else owner.setHp(owner.getHp() - (int) Math.floor(damage * 0.75));
 		//owner.setWoundPenalty(1.0 - ((double) owner.getHp() / (double) owner.getMaxHp()));
 		//if (isDebug) System.out.println(name + " has a woundPenalty level of " + woundPenalty + ".");
 		if (isDebug) System.out.println(attacker.getName() + " attacks " + owner.getName() + " for " + damage + " health, " + owner.getHp() + " remaining.");
@@ -178,6 +182,22 @@ public class BattleState {
 
 	public void setOwner(Organism owner) {
 		this.owner = owner;
+	}
+
+
+	/**
+	 * @return the cornered
+	 */
+	public boolean isCornered() {
+		return cornered;
+	}
+
+
+	/**
+	 * @param cornered the cornered to set
+	 */
+	public void setCornered(boolean cornered) {
+		this.cornered = cornered;
 	}
 	
 	
