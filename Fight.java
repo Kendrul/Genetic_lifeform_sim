@@ -64,6 +64,7 @@ public BattleState fightSim()
 		}
 	}//end while loop
 	Starter.getStats().incFightEvents(1);
+	Starter.getTurnStats().incFightEvents(1);
 	if ((rob.getHp() <= 0) || (runnerRunner == ROB)){
 		//bob won
 		if (isDebug) System.out.println(bob.getName() + " wins the fight, with " + bob.getHp() + " health remaining.");

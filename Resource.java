@@ -15,7 +15,7 @@ public class Resource {
 	private int startAmount; //patch resources only
 	private int rShape;
 
-
+	private boolean mutex = false;
 
 	public Resource(int type, int num, Patch location)
 	{
@@ -25,7 +25,8 @@ public class Resource {
 		owner = null;
 		rColor = WorldState.resourceColor[num];
 		rShape = WorldState.resourceShape[num];
-		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
+		if (WorldState.randomFood) amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
+		else amount = WorldState.resourceAmountMax;
 		startAmount = amount;
 	}
 	
@@ -50,7 +51,7 @@ public class Resource {
 		rColor = WorldState.resourceColor[num];
 		rShape = WorldState.resourceShape[num];
 		amount = WorldState.rng0[1].rInt(WorldState.resourceAmountMax);
-		startAmount = 0; //only applies to patch resources
+		startAmount = num; //only applies to patch resources
 	}
 	
 		public Organism getOwner() {
@@ -108,29 +109,32 @@ public class Resource {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
-		this.amount = amount;
-	}
 	
-	public int removeAmount(int a)
+	public synchronized int removeAmount(int a)
 	{
+		//catcher();
 		if (a >= amount){//not enough resource, it has been e
 			a = amount;
 			amount = 0;
-			if(WorldState.allowResourceExhaustion) home.setTheR(null);
+			//if(WorldState.allowResourceExhaustion) home.setTheR(null);
+			pitcher();
 			return a;
 		} else{
 		this.amount -= a;
+		//pitcher();
 		return a;
 		}
+		
 	}
 	
-	public void addAmount(int amount)
+	public synchronized void addAmount(int amount)
 	{
+		//catcher();
 		this.amount += amount;
+		//pitcher();
 	}
 	
-	public void replenish()
+	/*public synchronized void replenish()
 	{
 		if ((amount == 0) || (amount < (startAmount * WorldState.respawnAmountMax))){
 		
@@ -145,14 +149,28 @@ public class Resource {
 				Starter.getStats().incReplenishEvents(1);
 			}
 		}
-	}
+	}*/
 	
-	public void replenish2()
+	public synchronized void replenish2()
 	{//reset's the resource value of the patch back to the start value
+		//catcher();
 		amount = startAmount;
+		
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + getName() + " regrew " + amount + " units on location (" + home.getX() +","+ home.getY() +").");
 		Starter.getStats().incReplenishedAmount(amount);
 		Starter.getStats().incReplenishEvents(1);
+		Starter.getTurnStats().incReplenishedAmount(amount);
+		Starter.getTurnStats().incReplenishEvents(1);
+		//pitcher();
+	}
+	
+	private synchronized void catcher(){
+		while(mutex){}
+		mutex = true;
+	}
+	
+	private synchronized void pitcher(){
+		mutex = false;
 	}
 	
 }

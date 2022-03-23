@@ -20,6 +20,7 @@ public class EventPack {
 		kid.setTheOrg(new OrganismGFX(Starter.getGrid(), dad.getPoint().x, dad.getPoint().y));
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + dad.getName() + " and " + mom.getName() + " had a child named " + kid.getName());
 		Starter.getStats().incSexualReproductionEvents(1);
+		Starter.getTurnStats().incSexualReproductionEvents(1);
 		WorldState.addGenerationVault(kid.getInfo());
 		kid.getInfo().cycle += "b";
 		kid.getInfo().parents = dad.getName() + "." + mom.getName();
@@ -36,6 +37,7 @@ public class EventPack {
 		kid2.setTheOrg(new OrganismGFX(Starter.getGrid(), parent.getPoint().x, parent.getPoint().y));
 		WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + parent.getName() + " had a child named " + kid2.getName());
 		Starter.getStats().incAsexualReproductionEvents(1);
+		Starter.getTurnStats().incAsexualReproductionEvents(1);
 		WorldState.addGenerationVault(kid2.getInfo());
 		kid2.getInfo().cycle += "b";
 		kid2.getInfo().parents = parent.getName();
@@ -47,6 +49,7 @@ public class EventPack {
 		if(WorldState.reproductionDeath){
 			WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + o.getName() + " died from the reproductive process.");
 			Starter.getStats().incReproductionDeath(1);
+			Starter.getTurnStats().incReproductionDeath(1);
 			Starter.entityDeath(o, "Reproduction");
 		}
 	}
@@ -58,8 +61,11 @@ public class EventPack {
 	
 	public static int litterSize(int p, double [] rule){
 		//p is the number of parents, rule is the number of children
-		int num;
-		num = (int) Math.ceil(p * (1+ rule[1]));
+		
+		int kids = (int) Math.ceil(WorldState.startOrgNum * rule[1]);
+		if (p >= (int) Math.ceil(WorldState.startOrgNum * rule[0])) p = (int) Math.ceil(WorldState.startOrgNum * rule[0]);
+			
+		int num = (int) Math.ceil(kids / p);
 		return num;
 	}
 	//-------------------------------------------------------------------
@@ -246,15 +252,21 @@ public class EventPack {
 			receiver.addResource(r2, r2.getAmount());
 			if (!isTheft){
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + giver.getName() + " shared " + amount + " units of " + r.getName() + " with " + receiver.getName());
+				giver.incFoodShared(amount);
 				Starter.getStats().incShareEvents(1);
 				Starter.getStats().incFoodShared(amount);
+				Starter.getTurnStats().incShareEvents(1);
+				Starter.getTurnStats().incFoodShared(amount);
 				Starter.getGrid().getPatch(giver.getPoint()).setLocalEvent("S");
 				//coupling benefit
 			} else
 			{
 				WorldState.addLogEvent("[Turn " + Starter.getTurn() + "] " + receiver.getName() + " took " + amount + " units of " + r.getName() + " from " + giver.getName());
+				receiver.incFoodStolen(amount);
 				Starter.getStats().incTheftEvents(1);
 				Starter.getStats().incFoodStolen(amount);
+				Starter.getTurnStats().incTheftEvents(1);
+				Starter.getTurnStats().incFoodStolen(amount);
 				//coupling penalty
 			}
 		} else {}//do nothing
@@ -325,9 +337,12 @@ public class EventPack {
 		if (aStartedIt) a.subActionPoint();
 		else b.subActionPoint();
 		
+		a.incFightNum(1);
+		b.incFightNum(1);
 		Fight battle = new Fight(a.getFighter(), b.getFighter());
 		Starter.getGrid().getPatch(a.getPoint()).setLocalEvent("F");
 		BattleState winner = battle.fightSim();
+		if (winner != null) winner.getOwner().incFightWon(1);
 		return winner.getOwner();
 	}
 	
@@ -339,11 +354,13 @@ public class EventPack {
 			if (aboutFood && b.hasFood()) EventPack.shareResource(b, a, b.getInventory().get(0), b.getInventory().get(0).getAmount(), true);
 			Starter.entityDeath(b, "Fight");
 			Starter.getStats().incFightDeath(1);
+			Starter.getTurnStats().incFightDeath(1);
 		}
 		else if ((winner != null) && (winner.equals(b))) 
 			{
 				Starter.entityDeath(a, "Fight");
 				Starter.getStats().incFightDeath(1);
+				Starter.getTurnStats().incFightDeath(1);
 			}
 		
 		winner.incSitCounter(1);

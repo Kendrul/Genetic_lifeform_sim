@@ -3,8 +3,8 @@ import java.util.Arrays;
 
 public class StatPack {
 	
-	double orgTotal = 0;
-	double startOrg = WorldState.startOrgNum + 1;
+	public double orgTotal = 0;
+	double startOrg = WorldState.startOrgNum;
 	double orgAlive = 0;
 	double endTurn = Starter.getTurn();
 	double forcedReproductionEvents = Starter.getTurn() / WorldState.forcedReproductionEvent;
@@ -49,14 +49,14 @@ public class StatPack {
 	//double avgLitterSize = 0;
 	//double avgMovesPerOrg = 0;
 	
-	public void update()
+	public void update(int n)
 	{
 		endTurn = Starter.getTurn() - 1; //have to -1 because it exits after the turn increments past the end point
 		//avgLitterSize = (orgTotal - startOrg) / reproductionDeath;
 		//avgMovesPerOrg = (wanderMoves + moveMoves + huntMoves)/ (orgTotal - startOrg);
 		forcedReproductionEvents = Starter.getTurn() / WorldState.forcedReproductionEvent;
 		orgAlive = Starter.getLifeForms().size();
-		orgTotal = WorldState.nameVault.size();
+		orgTotal = n;
 	}
 		/**
 	 * @param replenishEvents the replenishEvents to set

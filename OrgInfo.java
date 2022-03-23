@@ -2,7 +2,7 @@
 public class OrgInfo {
 	public String number;
 	public String name;
-	public String age;
+	public String age = "";
 	public String generation;
 	//for showing their cycle through generations
 	//g = random creation, b = repro birth, r = reproduced, d = died

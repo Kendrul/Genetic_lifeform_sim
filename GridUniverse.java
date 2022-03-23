@@ -239,10 +239,12 @@ public class GridUniverse extends JPanel{
 					int [] x = {cellX + (length/2), cellX, cellX + length};
 					int [] y = {cellY + (width/4), cellY + ((3 * width)/4), cellY + ((3 * width)/4)};
 					g.fillPolygon(x, y, 3);
+					//g.drawString(Integer.toString(patch.getTheR().getAmount()), x[0], y[0]);
 				} else if (patch.getTheR().getrShape() == 1) { //upside down triangle
 					int [] x = {cellX + (length/2), cellX, cellX + length};
 					int [] y = {cellY + ((3 * width)/4), cellY + (width/4), cellY + (width/4)};
 					g.fillPolygon(x, y, 3);
+					//g.drawString(Integer.toString(patch.getTheR().getAmount()), x[0], y[0]);
 				} else //default small square 
 				{
 					g.fillRect(cellX + (length/4), cellY + (width/4), length - (length/2), width - (width/2));

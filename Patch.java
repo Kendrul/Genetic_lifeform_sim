@@ -147,7 +147,8 @@ public class Patch {
 	public synchronized boolean hasFood()
 	{
 		if (theR != null){
-			if((theR.getResourceType() == WorldState.resourceType[0]) && (theR.getAmount() > 0))
+			//if((theR.getResourceType() == WorldState.resourceType[0]) && (theR.getAmount() > 0))
+			if (theR.getAmount() > 0)
 			{
 				return true;
 			}

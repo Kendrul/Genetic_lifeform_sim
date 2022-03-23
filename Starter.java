@@ -10,6 +10,7 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -36,6 +37,7 @@ public class Starter{
 	private static GridUniverse grid;
 	private static int turn;
 	private static StatPack stats;
+	private static StatPack turnStats;
 	private static int generation = 0;
 	
 	private static boolean start = true;
@@ -56,6 +58,7 @@ public class Starter{
     static boolean pause2 = false;
     static boolean start3 = false;
     private static Thread threadObject;
+    
 	
 	
 	public static void main(String[] args) {
@@ -72,6 +75,7 @@ public class Starter{
 		//worldWindow = terraGenesis();
 		
 		stats = new StatPack();
+		turnStats = new StatPack();
 		WorldState.resetLogs();
 		WorldState.addLogEvent("Starting Program....");
 		System.out.println("Starting Program...");
@@ -117,14 +121,17 @@ public class Starter{
 			danceParty();
 			WorldState.addLogEvent("Terminating Simulation " + i+ " at turn " + getTurn() + ".....");
 			System.out.println("Terminating Simulation " + i+ " at turn " + getTurn() + ".....");
+			stats.update(WorldState.nameVault.size());
+			WorldState.resetTurn();
 			FileOutput out = new FileOutput();
 			out.outputFiles("colonialCognitionStats" + i + ".csv","colonialCognitionLog" + i + ".txt");
-			reset(i+1);
+			if (i + 1 < WorldState.trials) reset(i+1);
 		}
 	}
 	
 	public static void reset(int run){
 		stats = new StatPack();
+		turnStats = new StatPack();
 		WorldState.resetLogs();
 		WorldState.addLogEvent("Starting Simulation " + run);
 		System.out.println("Starting Simulation " + run);
@@ -145,6 +152,7 @@ public class Starter{
 		Organism e = new Organism();
 		e.setGenes(EventPack.randomGS());
 		lifeForms.add(e);
+		WorldState.addGenerationVault(e.getInfo());
 		lifeForms.get(0).setTheOrg(new OrganismGFX(grid, 0, 0));
 
 		
@@ -164,6 +172,7 @@ public class Starter{
 	private static void danceParty()throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException{
 		//moves the fake organisms around
 		turn = 1;
+		setFitnessRules();
 		//if (isDebug) WorldState.addLogEvent("Begin Movement Pattern Testing....");
 		if (WorldState.useTurns){
 			boolean forceReproduction = false;
@@ -184,6 +193,7 @@ public class Starter{
 					//reset's the action points of the organisms
 					lifeForms.get(index).resetAp();
 					if (forceReproduction == true) {
+						//lifeForms.get(index).getRFitness();
 						Collections.sort(lifeForms);					
 					}
 				}
@@ -214,6 +224,7 @@ public class Starter{
 					}
 				}
 
+				frame.setTitle("Planet Terra Nova: Turn " + turn + " / " + WorldState.turns);
 				grid.repaint();
 				/*
 				if (reset == true) {
@@ -237,7 +248,7 @@ public class Starter{
 		
 		for(int i = 0; i < lifeForms.size(); i++)
 		{
-			lifeForms.get(i).getInfo().calcAge();
+			lifeForms.get(i).getInfo().age = Integer.toString(lifeForms.get(i).getAge());
 			//WorldState.addGenerationVault(lifeForms.get(i).getInfo());
 		}
 }//end danceParty
@@ -246,7 +257,8 @@ public class Starter{
 		//Create the graphic window, and the world behind it
 
 		grid = new GridUniverse(WorldState.pLnum, WorldState.pWnum);	
-		frame = new JFrame("Planet Terra Nova");
+		frame = new JFrame("Planet Terra Nova: Turn " + 0 + " / " + WorldState.turns);
+		//frame.setFont(new Font("CourierNew", Font.BOLD, 12));
 		JFrame btnframe = new JFrame("Control Interface");
 		//I've left some space on the left side of the grid for buttons
 		JPanel btnPanel = btnSetup();	
@@ -284,7 +296,7 @@ public class Starter{
         //JButton startButton = new JButton("Start");
         startButton.addActionListener(new ActionListener() {
              public void actionPerformed(ActionEvent ae) {
-                startButton.setText("haha");
+                startButton.setText("running");
                 start2 = true; 
                 //stopButton.setEnabled(true);
              }
@@ -365,6 +377,7 @@ public class Starter{
 	if (lifeForms.size() > 0) {
 		WorldState.addLogEvent("[Turn: " + turn+"] " + lifeForms.get(i).getName() + " has been culled by an act of the Creator.");
 		stats.incCullDeath(1);
+		turnStats.incCullDeath(1);
 		if (lifeForms.size() > 0) entityDeath(lifeForms.get(i), "Cull");
 	}
 }
@@ -375,6 +388,7 @@ public class Starter{
 	if (newList.size() > 0) {
 		WorldState.addLogEvent("[Turn: " + turn+"] " + newList.get(0).getName() + " has been culled by an act of the Creator.");
 		stats.incCullDeath(1);
+		turnStats.incCullDeath(1);
 		if (newList.size() > 0) entityDeath(newList.get(0));
 		newList.remove(0);
 	}
@@ -444,8 +458,52 @@ public class Starter{
 	    	return generation;
 	    }
 	    
-	    public static synchronized void forcedReproductionEvent() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
+	    
+	    
+	    /**
+		 * @return the turnStats
+		 */
+		public static StatPack getTurnStats() {
+			return turnStats;
+		}
+
+		/**
+		 * @param turnStats the turnStats to set
+		 */
+		public static void setTurnStats(StatPack turnStats) {
+			Starter.turnStats = turnStats;
+		}
+
+		public static synchronized void forcedReproductionEvent() throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException, AWTException
 	    {//handles the forced Reproduction event segments
+	    	int count = 0;
+			for (int index = 0; index < lifeForms.size(); index++){
+				//calculate average rFitness
+				WorldState.avgFC += lifeForms.get(index).potentialEnergy();
+				WorldState.avgFE += lifeForms.get(index).getFoodEaten();
+				WorldState.avgFS += lifeForms.get(index).getFoodShared();
+				WorldState.avgFT += lifeForms.get(index).getFoodStolen();
+				WorldState.avgBN += lifeForms.get(index).getFightNum();
+				WorldState.avgBW += lifeForms.get(index).getFightWon();
+				WorldState.avgA += lifeForms.get(index).getPheno().getAgreeability();
+				count++;
+			}
+			
+			//get the averages
+			WorldState.avgFC /= count;
+			WorldState.avgFE /= count;
+			WorldState.avgFS /= count;
+			WorldState.avgFT /= count;
+			WorldState.avgBN /= count;
+			WorldState.avgBW /= count;
+			WorldState.avgA /= count;
+			
+			//sort!
+			for (int index = 0; index < lifeForms.size(); index++){
+				//reset's the action points of the organisms
+					Collections.sort(lifeForms);					
+			}
+	    	WorldState.resetTurn();
 	    	double [] rules = reproRuleSelection();
 			ArrayList<Organism> newList1 = new ArrayList<Organism>(), newList2 = new ArrayList<Organism>();
 			int newSize = (int) (WorldState.startOrgNum * rules[0]);
@@ -485,16 +543,17 @@ public class Starter{
 				WorldState.addGenerationVault(e.getInfo());
 				e.getInfo().cycle += "g";
 			}
-			for (int ix = 0; ix < WorldState.pLength; ix++)
-			{	for (int jy =0; jy < WorldState.pWidth; jy++)
+			for (int ix = 0; ix < WorldState.pLnum; ix++)
+			{	for (int jy =0; jy < WorldState.pWnum; jy++)
 				{
 					 Patch patch = grid.getPatch(ix, jy);
-					if (patch.isHasResource() && patch.getTheR().getResourceType() == 0)
+					if (patch.getTheR() != null)
 					{//reset the resources
 						patch.getTheR().replenish2();
 					}	
 				}
 			}
+			
 	    }//end forcedReproductionEvent
 	    
 	    private static double [] reproRuleSelection(){
@@ -503,5 +562,16 @@ public class Starter{
 	    	//[0] = % reproduction candidates, [1] = % of born, [2] = % of random gen pops
 	    	double [] rule = {0.1, 0.7, 0.2}; //172 rule
 	    	return rule;
+	    }
+	    
+	    private static void setFitnessRules(){
+	    	WorldState.rRuleSet = WorldState.useThisRuleSet;
+	    	//WorldState.rRuleSet[0] = 0; //food carried
+	    	//WorldState.rRuleSet[1] = 0; //food eaten
+	    	//WorldState.rRuleSet[2] = 0; //food shared
+	    	//WorldState.rRuleSet[3] = 0; //food stolen
+	    	//WorldState.rRuleSet[4] = 2; //number of fights
+	    	//WorldState.rRuleSet[5] = 0; //fights won
+	    	//WorldState.rRuleSet[6] = 0; //agreeability
 	    }
 }

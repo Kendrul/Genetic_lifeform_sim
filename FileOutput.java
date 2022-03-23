@@ -90,9 +90,9 @@ public class FileOutput {
 		String newString = "Final Stats";
 		statLine.add(newString);
 		//Add Statistical Information from StatPack Class
-				stats.update();
+				//stats.update();
 				reflectPack rs = EventPack.statFields(stats);
-				newString = "";
+				newString = "Block,";
 				
 				for(int i =0; i < rs.getFieldArrayNames().length; i++)
 				{
@@ -101,25 +101,48 @@ public class FileOutput {
 				}
 				
 				statLine.add(newString);
-				newString = "";
+				newString = "Final,";
 				
 				for (int j =0; j < rs.getFieldArrayValues().length; j++)
 				{
 					newString += Double.toString(rs.getFieldArrayValues()[j]);
 					newString += ",";
 				}
+				statLine.add(newString);
 				
-		statLine.add(newString);
+				//System.out.println("turnVault size: " + WorldState.turnVault.size());
+				for (int i =0; i < WorldState.turnVault.size(); i++) {
+					//newString = WorldState.nameVault.get(i) + "," + WorldState.generationVault.get(i) + ",";
+					rs = EventPack.statFields(WorldState.turnVault.get(i));
+					
+					newString = i + ",";
+					for (int j =0; j < rs.getFieldArrayValues().length; j++)
+					{
+						newString += rs.getFieldArrayValues()[j];
+						newString += ",";
+					}
+					//System.out.println(newString);
+					statLine.add(newString);
+				}
+				
+				
 		newString = "";
 		statLine.add(newString);
 		//next table of genetic information
-		newString = "Number, Name, Age, Generation, Life-Cycle, Birth-Turn, Death-Turn, Death Reason, Parents";
-		reflectPack ri;		
+		//newString = "Number, Name, Age, Generation, Life-Cycle, Birth-Turn, Death-Turn, Death Reason, Parents";
+		newString ="";
+		reflectPack ri = EventPack.infoFields(WorldState.generationVault.get(0));		
 		
 		reflectPack rg = EventPack.geneFields(WorldState.geneVault.get(0));
 		reflectPack rp = EventPack.phenoFields(new GeneToPhenotype(rg.getFieldArrayValues(),rg.getFieldArrayNames()));
 		reflectPack rk = EventPack.kinFields(new PhenotypeToKinetics(rp.getFieldArrayValues(),rp.getFieldArrayNames()));
 		
+		for(int i =0; i < ri.getFieldArrayNames().length; i++)
+		{
+			//if(i==0) newString = r.getFieldArrayNames()[0];
+			newString += ri.getFieldArrayNames()[i];
+			newString += ",";
+		}
 		for(int i =0; i < rg.getFieldArrayNames().length; i++)
 		{
 			//if(i==0) newString = r.getFieldArrayNames()[0];
@@ -173,9 +196,7 @@ public class FileOutput {
 			}
 			statLine.add(newString);
 			}
-		
-
-		
+	
 		return statLine;
 	}
 

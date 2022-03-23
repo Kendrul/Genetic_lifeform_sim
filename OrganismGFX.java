@@ -148,6 +148,7 @@ public class OrganismGFX{
 			grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 			if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has moved from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
 			Starter.getStats().incMoveMoves(1);
+			Starter.getTurnStats().incMoveMoves(1);
 			//grid.fillCell(locationX, locationY, this);
 		}
 		//grid.repaint();
@@ -232,6 +233,7 @@ public void randomMove() throws AWTException {
 			grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 			if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has wandered from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
 			Starter.getStats().incWanderMoves(1);
+			Starter.getTurnStats().incWanderMoves(1);
 		}
 
 	}
@@ -359,6 +361,7 @@ public void randomMove() throws AWTException {
 				grid.getPatchGrid()[formerCellX][formerCellY].removeE(owner);
 				if (WorldState.logMove) WorldState.addLogEvent("[Turn:" + Starter.getTurn() + "] " + owner.getName() + " has gone on a search from [" + formerCellX + "," + formerCellY + "] to [" +locationX + "," + locationY + "]");
 				Starter.getStats().incHuntMoves(1);
+				Starter.getTurnStats().incHuntMoves(1);
 			}
 		}//canMove
 	}

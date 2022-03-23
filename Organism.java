@@ -59,6 +59,16 @@ public class Organism implements Comparable{
 	private ArrayList<Coupling> pairs; 
 	private TradeRequest tr = null;
 	
+	
+	//----------------------------
+	// FITNESS STATS
+	//-------------------------
+	private int foodEaten = 0;
+	private int fightNum = 0;
+	private int fightWon = 0;
+	private int foodStolen = 0;
+	private int foodShared = 0;
+	
 	//TBI
 	/**
 	 * 
@@ -307,6 +317,7 @@ public class Organism implements Comparable{
 				if (hp < 0) {
 					WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has died due to it's poor health and/or wounds.");
 					Starter.getStats().incWoundDeath(1);
+					Starter.getTurnStats().incWoundDeath(1);
 					Starter.entityDeath(this, "Wounds");
 				}
 				return;
@@ -324,6 +335,7 @@ public class Organism implements Comparable{
 			if (hp < 0) {
 				WorldState.addLogEvent("[Turn:" + Starter.getTurn() +"] " + this.getName() + " has starved to death.");
 				Starter.getStats().incStarveDeath(1);
+				Starter.getTurnStats().incStarveDeath(1);
 				Starter.entityDeath(this, "Starvation");
 			}
 		}
@@ -349,6 +361,43 @@ public class Organism implements Comparable{
 
 	public BattleState getFighter() {
 		return fighter;
+	}
+	
+	
+
+	/**
+	 * @param foodEaten the foodEaten to set
+	 */
+	public void incFoodEaten(int foodEaten) {
+		this.foodEaten += foodEaten;
+	}
+
+	/**
+	 * @param fightNum the fightNum to set
+	 */
+	public void incFightNum(int fightNum) {
+		this.fightNum += fightNum;
+	}
+
+	/**
+	 * @param fightWon the fightWon to set
+	 */
+	public void incFightWon(int fightWon) {
+		this.fightWon += fightWon;
+	}
+
+	/**
+	 * @param foodStolen the foodStolen to set
+	 */
+	public void incFoodStolen(int foodStolen) {
+		this.foodStolen += foodStolen;
+	}
+
+	/**
+	 * @param foodShared the foodShared to set
+	 */
+	public void incFoodShared(int foodShared) {
+		this.foodShared += foodShared;
 	}
 
 	public void setFighter(BattleState fighter) {
@@ -586,11 +635,13 @@ public class Organism implements Comparable{
 	public void justEat(Resource r, int amount)
 	{//resource is passed in case it modifies the energy gain
 		changeEnergyLevel(amount * WorldState.calorieFactor);
-		addRFit(amount);
+		if(WorldState.rRuleSet[1] == 1) incFoodEaten(amount);
 		actionPoint--;
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " ate " + amount + " " + r.getName() + "s and regained " + (amount * WorldState.calorieFactor) + " energy.");
 		Starter.getStats().incConsumeEvents(1);
 		Starter.getStats().incFoodConsumed(amount);	
+		Starter.getTurnStats().incConsumeEvents(1);
+		Starter.getTurnStats().incFoodConsumed(amount);	
 	}
 
 	public void changeEnergyLevel(int amount)
@@ -615,6 +666,7 @@ public class Organism implements Comparable{
 			consumeFood();
 			WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " is in poor health, and is unable to complete any actions.");
 			Starter.getStats().incUnableToActTurns(1);
+			Starter.getTurnStats().incUnableToActTurns(1);
 			return -1; //can't act
 		}
 		
@@ -1108,12 +1160,15 @@ public class Organism implements Comparable{
 	{
 		if (actionPoint < 0) return;
 		int amount = calcCollect();
+		if (amount == 0) return; //can't carry any more
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " reaped " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
 		Starter.getStats().incReapEvents(1);
-		Starter.getStats().incFoodReap(amount);			
-		addRFit(amount);
+		Starter.getStats().incFoodReap(amount);	
+		Starter.getTurnStats().incReapEvents(1);
+		Starter.getTurnStats().incFoodReap(amount);	
+		//addRFit(amount);
 		consumeFood();
 		theOrg.getPatch().getTheR().removeAmount(amount);
 	}
@@ -1124,12 +1179,14 @@ public class Organism implements Comparable{
 		if (!theOrg.getPatch().hasFood() || theOrg.getPatch().getTheR().getAmount() <=0) return; //no food, or exhausted
 		
 		int amount = calcCollect();
+		if (amount == 0) return; //can't carry any more
 		if (amount > theOrg.getPatch().getTheR().getAmount()) amount = theOrg.getPatch().getTheR().getAmount();
 		amount -= addResource(theOrg.getPatch().getTheR(), amount);
-		addRFit(amount);
 		WorldState.addLogEvent("[Turn:"+ Starter.getTurn() + "] " + getName() + " harvested " + amount + " " + theOrg.getPatch().getTheR().getName() + "s.");
 		Starter.getStats().incHarvestEvents(1);
-		Starter.getStats().incFoodHarvest(amount);				
+		Starter.getStats().incFoodHarvest(amount);	
+		Starter.getTurnStats().incHarvestEvents(1);
+		Starter.getTurnStats().incFoodHarvest(amount);	
 		theOrg.getPatch().getTheR().removeAmount(amount);
 		actionPoint--;
 	}
@@ -1389,13 +1446,9 @@ public class Organism implements Comparable{
 		return reproPriority;
 	}
 	
-	public void addRFit(int i)
-	{
-		rFitness += i;
-	}
-	
 	public int getRFitness()
 	{
+		rFitCalc();
 		return rFitness;
 	}
 	
@@ -1448,6 +1501,7 @@ public class Organism implements Comparable{
 
 	@Override
 	public int compareTo(Object o) {
+		if (rFitness == 0) getRFitness();
 		int rFit = ((Organism)o).getRFitness();
 		return rFit - this.rFitness;
 	}
@@ -1469,18 +1523,101 @@ public class Organism implements Comparable{
 		return energy;
 	}
 	
-	public void rFitCalc(){
+	public void rFitCalc(){//TODO
 		//calculate rFitness based on specified values
-		rFitness = 0;
+		int [] ruleSet = WorldState.rRuleSet;
+		int ruleNum = WorldState.rRuleNum;
+		int fc, fe, bw, bn, fs, ft;
+		int a;
+		
+		if (!WorldState.useOldRule){
+			//rule 0, food carried
+			if (ruleSet[0] == 1) fc = potentialEnergy() - WorldState.avgFC;
+			else fc = 0;
+			//rule 1, food eaten	
+			if (ruleSet[1] == 1) fe = foodEaten - WorldState.avgFE;
+			else fe = 0;
+			//rule 2, food shared
+			if (ruleSet[2] == 1) fs = foodShared - WorldState.avgFS;
+			else if (ruleSet[2] == 2) fs = -(foodShared - WorldState.avgFS);
+			else fs = 0;
+			//rule 3, food stolen
+			if (ruleSet[3] == 1) ft = (foodStolen - WorldState.avgFT);
+			else if (ruleSet[3] == 2) ft = -(foodStolen - WorldState.avgFT);
+			else ft = 0;
+			//rule 4, battles fought
+			if (ruleSet[2] == 1) bn = (fightNum- WorldState.avgBN);
+			else if (ruleSet[2] == 2) bn = -(fightNum- WorldState.avgBN);
+			else bn = 0;
+			//rule 5, battles won
+			if (ruleSet[2] == 1) bw = fightWon - WorldState.avgBW;
+			else if (ruleSet[2] == 2) bw = -(fightWon- WorldState.avgBN);
+			else bw = 0;
+			//rule 6, agreeability
+			if (ruleSet[2] == 1) a = (int) (100 * (pheno.getAgreeability() - WorldState.avgA));
+			else if (ruleSet[2] == 2) a = (int) (-100 * (pheno.getAgreeability()- WorldState.avgA));
+			else a = 0;
+			
+			//formula to determine reproductive-fitness
+			rFitness = fc + fe + fs + ft + bn + bw + a;
+		}else {
+			rFitness = potentialEnergy() - foodStolen + foodEaten + foodShared;
+		}
 	}
 	
 	public void resetFitness(){
+		//reset all the fitness values to 0
 		inventory.clear();
-		rFitCalc();
+		foodEaten = 0;
+		fightNum = 0;
+		fightWon = 0;
+		foodStolen = 0;
+		foodShared = 0;
+		rFitness = 0;
 	}
 	
 	public OrgInfo getInfo()
 	{
 		return info;
 	}
+	
+	public int getAge(){
+		return age;
+	}
+
+	/**
+	 * @return the foodEaten
+	 */
+	public int getFoodEaten() {
+		return foodEaten;
+	}
+
+	/**
+	 * @return the fightNum
+	 */
+	public int getFightNum() {
+		return fightNum;
+	}
+
+	/**
+	 * @return the fightWon
+	 */
+	public int getFightWon() {
+		return fightWon;
+	}
+
+	/**
+	 * @return the foodStolen
+	 */
+	public int getFoodStolen() {
+		return foodStolen;
+	}
+
+	/**
+	 * @return the foodShared
+	 */
+	public int getFoodShared() {
+		return foodShared;
+	}
+	
 }
